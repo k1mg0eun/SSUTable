@@ -13,6 +13,8 @@ Android Studio에서 `SSUTable` 폴더를 열고 Run. 또는:
 cd SSUTable && ./gradlew :app:installDebug
 ```
 
+에뮬레이터나 폰 없이 브라우저에서 보려면 [docs/APPETIZE.md](docs/APPETIZE.md)를 참고한다.
+
 규칙 테스트(JUnit):
 
 ```bash
