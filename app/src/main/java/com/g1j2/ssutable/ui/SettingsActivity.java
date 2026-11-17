@@ -34,6 +34,11 @@ public class SettingsActivity extends AppCompatActivity {
     private Prefs prefs;
     private TextView virtualTime;
     private LinearLayout permissionRows;
+    private MaterialButtonToggleGroup modeGroup;
+    private MaterialButtonToggleGroup speedGroup;
+    private MaterialSwitch examSwitch;
+    /** 다른 폰이 바꾼 /demo 값을 화면에 맞추는 중. 이때는 리스너가 다시 쓰지 않는다. */
+    private boolean syncingDemo;
     private final Runnable tick = this::renderClock;
 
     @Override
@@ -67,10 +72,12 @@ public class SettingsActivity extends AppCompatActivity {
         findViewById(R.id.historyRow).setOnClickListener(v -> showHistory());
 
         // 시연 모드
-        MaterialButtonToggleGroup modeGroup = findViewById(R.id.modeGroup);
-        modeGroup.check(idFor(App.get().demo().current().forcedMode));
+        modeGroup = findViewById(R.id.modeGroup);
+        speedGroup = findViewById(R.id.speedGroup);
+        examSwitch = findViewById(R.id.examSwitch);
+        syncDemoControls();
         modeGroup.addOnButtonCheckedListener((g, id, checked) -> {
-            if (!checked) return;
+            if (!checked || syncingDemo) return;
             App.get().setForcedMode(modeFor(id));
         });
 
@@ -78,10 +85,8 @@ public class SettingsActivity extends AppCompatActivity {
         addJump(jumpRow, "지금", -1);
         for (int m : JUMPS) addJump(jumpRow, Fmt.hmMinute(m), m);
 
-        MaterialButtonToggleGroup speedGroup = findViewById(R.id.speedGroup);
-        speedGroup.check(App.get().clock().speed() > 1 ? R.id.speed10 : R.id.speed1);
         speedGroup.addOnButtonCheckedListener((g, id, checked) -> {
-            if (checked) App.get().setSpeed(id == R.id.speed10 ? 10 : 1);
+            if (checked && !syncingDemo) App.get().setSpeed(id == R.id.speed10 ? 10 : 1);
         });
 
         MaterialButtonToggleGroup insideGroup = findViewById(R.id.insideGroup);
@@ -92,10 +97,8 @@ public class SettingsActivity extends AppCompatActivity {
             App.get().tickNow();
         });
 
-        MaterialSwitch exam = findViewById(R.id.examSwitch);
-        exam.setChecked(App.get().exam());
-        exam.setOnCheckedChangeListener((b, on) -> {
-            App.get().setExam(on);
+        examSwitch.setOnCheckedChangeListener((b, on) -> {
+            if (!syncingDemo) App.get().setExam(on);
         });
 
         MaterialSwitch demoPanel = findViewById(R.id.demoPanelSwitch);
@@ -159,11 +162,25 @@ public class SettingsActivity extends AppCompatActivity {
         App app = App.get();
         String speed = app.clock().speed() > 1 ? ", " + app.clock().speed() + "배속" : "";
         renderConnection();
+        syncDemoControls();
         virtualTime.setText("앱 시각 " + Fmt.dateTime(app.now()) + speed + "\n지금 모드: " + app.mode().mode.label
                 + (app.mode().forced ? " (지정)" : ""));
         // 동시 예약 실패 스위치는 한 번 쓰면 꺼진다
         MaterialSwitch conflict = findViewById(R.id.conflictSwitch);
         if (conflict.isChecked() != prefs.conflictNext()) conflict.setChecked(prefs.conflictNext());
+    }
+
+    /** 모드·배속·시험 컨트롤을 공유 설정에 맞춘다. 다른 폰이 바꿔도 따라간다. */
+    private void syncDemoControls() {
+        App app = App.get();
+        int modeId = idFor(app.demo().current().forcedMode);
+        int speedId = app.clock().speed() > 1 ? R.id.speed10 : R.id.speed1;
+        boolean exam = app.exam();
+        syncingDemo = true;
+        if (modeGroup.getCheckedButtonId() != modeId) modeGroup.check(modeId);
+        if (speedGroup.getCheckedButtonId() != speedId) speedGroup.check(speedId);
+        if (examSwitch.isChecked() != exam) examSwitch.setChecked(exam);
+        syncingDemo = false;
     }
 
     private void renderProfile() {
