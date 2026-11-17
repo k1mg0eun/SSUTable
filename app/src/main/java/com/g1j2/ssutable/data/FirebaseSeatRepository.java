@@ -209,7 +209,7 @@ public final class FirebaseSeatRepository implements SeatRepository {
     }
 
     private FloorSnapshot compute() {
-        return merger.merge(env.now(), env.mode(), env.exam(), claims, uid, current);
+        return merger.merge(env.now(), env.mode(), env.exam(), claims, current);
     }
 
     @Override
@@ -235,11 +235,12 @@ public final class FirebaseSeatRepository implements SeatRepository {
     public void reserve(String seatId, ReserveCallback cb) {
         Attempt attempt;
         ReserveResult early;
+        // 트랜잭션은 Firebase 작업 스레드에서 돌므로 판정 시각은 여기(메인)서 잡는다
+        long now = env.now();
         synchronized (this) {
             early = check(seatId);
             attempt = null;
             if (early == null) {
-                long now = env.now();
                 Reservation r = engine.create(newId("R", now), layout.seat(seatId), env.mode(), now, newId("T", now));
                 attempt = new Attempt(r, cb);
                 pending = attempt;
@@ -257,7 +258,7 @@ public final class FirebaseSeatRepository implements SeatRepository {
             @NonNull
             @Override
             public Transaction.Result doTransaction(@NonNull MutableData data) {
-                if (!SeatClaim.takeable(SeatClaims.parse(data.getValue()), env.now())) return Transaction.abort();
+                if (!SeatClaim.takeable(SeatClaims.parse(data.getValue()), now)) return Transaction.abort();
                 data.setValue(SeatClaims.toMap(claim));
                 return Transaction.success(data);
             }
@@ -273,7 +274,7 @@ public final class FirebaseSeatRepository implements SeatRepository {
 
     /** 서버에 가기 전 로컬 확인. 통과하면 null. */
     private ReserveResult check(String seatId) {
-        if (uid == null || !currentLoaded || pending != null) return ReserveResult.ERROR;
+        if (uid == null || !currentLoaded || loadFailed || pending != null) return ReserveResult.ERROR;
         if (current != null && current.active()) return ReserveResult.ALREADY_HAVE;
         Seat seat = layout.seat(seatId);
         if (seat == null) return ReserveResult.NOT_FOUND;

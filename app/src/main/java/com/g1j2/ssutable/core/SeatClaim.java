@@ -5,6 +5,9 @@ package com.g1j2.ssutable.core;
  * since ~ deadline 사이에만 유효하고, 기한이 지나면 다른 사람이 가져갈 수 있다.
  */
 public final class SeatClaim {
+    /** 폰끼리 시계가 조금 어긋나도 막 잡힌 점유를 살아 있게 보는 여유(가상 5분). */
+    public static final long FUTURE_SLACK = ReservationEngine.MIN * 5;
+
     public String uid;
     public String resId;
     /** WAITING, IN_USE, AWAY 중 하나. */
@@ -34,8 +37,9 @@ public final class SeatClaim {
         return c;
     }
 
+    /** since보다 FUTURE_SLACK 넘게 앞선 시각이면 시계를 과거로 옮긴 뒤 남은 옛 항목이라 무효. */
     public boolean liveAt(long now) {
-        return since <= now && now < deadline;
+        return since - FUTURE_SLACK <= now && now < deadline;
     }
 
     /** 이 좌석을 새로 잡아도 되는지. 유효한 점유가 없으면 true. */

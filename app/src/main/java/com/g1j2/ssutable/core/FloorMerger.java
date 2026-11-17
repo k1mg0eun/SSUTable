@@ -13,14 +13,16 @@ public final class FloorMerger {
     }
 
     public FloorSnapshot merge(long now, ModeInfo info, boolean exam, Map<String, SeatClaim> claims,
-                               String myUid, Reservation mine) {
+                               Reservation mine) {
         SeatState[] states = new SeatState[layout.size()];
         String mineSeat = mine != null && mine.active() ? mine.seatId : null;
+        String mineId = mineSeat != null ? mine.id : null;
         int minute = Schedule.minuteOfDay(now);
         for (Seat seat : layout.seats) {
             SeatClaim c = claims == null ? null : claims.get(seat.id);
             if (c != null && c.liveAt(now)) {
-                if (c.uid != null && c.uid.equals(myUid)) {
+                // 내 진행 중 예약의 점유만 MINE. 내 uid로 남은 다른 점유는 남의 것처럼 보인다
+                if (c.resId != null && c.resId.equals(mineId)) {
                     states[seat.index] = SeatState.MINE;
                 } else {
                     states[seat.index] = c.state == Reservation.State.WAITING

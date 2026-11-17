@@ -99,7 +99,7 @@ void reserve(String seatId, ReserveCallback cb);   // 메인 스레드에서 cb 
 
 1. 좌석마다 `OccupancySimulator`로 가짜 상태를 구한다(같은 가상 시각이면 모든 폰이 같은 결과).
 2. `/seats`에 그 좌석 항목이 있고 `deadline > 가상 now`이면 진짜 예약이 이긴다: 내 uid면 MINE, 아니면 WAITING→RESERVED, IN_USE·AWAY→IN_USE.
-3. `since <= 가상 now < deadline`이 아닌 항목은 무시한다(가짜 상태로 돌아감). `deadline`이 지났으면 만료, `since`가 미래면 시연 시계를 과거로 옮긴 뒤 남은 옛 항목이다.
+3. `since - 5분 <= 가상 now < deadline`이 아닌 항목은 무시한다(가짜 상태로 돌아감). `deadline`이 지났으면 만료, `since`가 5분 넘게 미래면 시연 시계를 과거로 옮긴 뒤 남은 옛 항목이다. 5분(가상 시각) 여유는 폰끼리 시계가 조금 어긋나도 막 잡힌 다른 폰의 점유를 덮어쓰지 않게 하려는 것이다.
 4. 모드상 미개방(CLOSED) 좌석은 진짜 예약이 있어도 CLOSED가 아니라 진짜 예약 상태를 보인다. 예약은 개방일 때만 생기므로 드물고, 사용 중인 자리를 갑자기 숨기지 않기 위해서다.
 
 가짜 학생이 진짜 예약 좌석을 덮는 일은 없다(2번이 항상 이김). 진짜 사용자가 예약할 수 있는 좌석은 합친 결과가 FREE인 좌석뿐이다.

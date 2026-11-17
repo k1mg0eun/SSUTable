@@ -63,7 +63,7 @@ public final class LocalSeatRepository implements SeatRepository {
     }
 
     private FloorSnapshot compute() {
-        return merger.merge(env.now(), env.mode(), env.exam(), Collections.emptyMap(), null, current);
+        return merger.merge(env.now(), env.mode(), env.exam(), Collections.emptyMap(), current);
     }
 
     @Override
