@@ -18,6 +18,7 @@ import com.g1j2.ssutable.App;
 import com.g1j2.ssutable.R;
 import com.g1j2.ssutable.core.Mode;
 import com.g1j2.ssutable.core.Reservation;
+import com.g1j2.ssutable.core.SeatRepository;
 import com.g1j2.ssutable.data.Prefs;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
@@ -105,9 +106,18 @@ public class SettingsActivity extends AppCompatActivity {
         conflict.setChecked(prefs.conflictNext());
         conflict.setOnCheckedChangeListener((b, on) -> prefs.setConflictNext(on));
 
+        findViewById(R.id.resetSeats).setVisibility(
+                App.get().repo().connection() == SeatRepository.Connection.LOCAL ? View.GONE : View.VISIBLE);
+        findViewById(R.id.resetSeats).setOnClickListener(v -> new MaterialAlertDialogBuilder(this)
+                .setTitle("모든 좌석 예약을 초기화할까요?")
+                .setMessage("모든 폰의 좌석 예약이 지워지고, 예약 중이던 폰은 예약이 끝나요.")
+                .setPositiveButton("초기화", (d, w) -> App.get().repo().resetAllSeats())
+                .setNegativeButton("취소", null)
+                .show());
+
         findViewById(R.id.resetAll).setOnClickListener(v -> new MaterialAlertDialogBuilder(this)
                 .setTitle("모든 데이터를 지울까요?")
-                .setMessage("내 정보, 예약, 이용 기록이 모두 지워지고(시연 설정은 그대로 유지돼요) 첫 화면으로 돌아가요.")
+                .setMessage("내 정보, 예약, 이용 기록이 모두 지워지고 첫 화면으로 돌아가요. 다른 폰의 시연 설정은 그대로예요.")
                 .setPositiveButton("지우기", (d, w) -> {
                     App.get().resetAll();
                     startActivity(new Intent(this, OnboardingActivity.class)
@@ -123,6 +133,7 @@ public class SettingsActivity extends AppCompatActivity {
         App.get().addListener(tick);
         renderPermissions();
         renderClock();
+        renderConnection();
         ((TextView) findViewById(R.id.historyCount)).setText(App.get().repo().history().size() + "건");
         MaterialSwitch conflict = findViewById(R.id.conflictSwitch);
         conflict.setChecked(prefs.conflictNext());
@@ -134,9 +145,21 @@ public class SettingsActivity extends AppCompatActivity {
         App.get().removeListener(tick);
     }
 
+    private void renderConnection() {
+        String text;
+        switch (App.get().repo().connection()) {
+            case ONLINE: text = "연결됨"; break;
+            case OFFLINE: text = "오프라인"; break;
+            case CONNECTING: text = "연결 중"; break;
+            default: text = "로컬 모드(Firebase 설정 없음)";
+        }
+        ((TextView) findViewById(R.id.connectionStatus)).setText(text);
+    }
+
     private void renderClock() {
         App app = App.get();
         String speed = app.clock().speed() > 1 ? ", " + app.clock().speed() + "배속" : "";
+        renderConnection();
         virtualTime.setText("앱 시각 " + Fmt.dateTime(app.now()) + speed + "\n지금 모드: " + app.mode().mode.label
                 + (app.mode().forced ? " (지정)" : ""));
         // 동시 예약 실패 스위치는 한 번 쓰면 꺼진다

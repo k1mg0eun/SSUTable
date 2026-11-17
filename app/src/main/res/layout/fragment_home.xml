@@ -23,6 +23,16 @@
             android:layout_weight="1"
             android:fontFeatureSettings="tnum" />
 
+        <TextView
+            android:id="@+id/offlineTag"
+            style="@style/Text.Tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:backgroundTint="@color/danger"
+            android:text="오프라인"
+            android:visibility="gone" />
+
         <ImageButton
             android:id="@+id/settings"
             style="@style/IconButton"

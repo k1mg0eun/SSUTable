@@ -18,6 +18,7 @@ import com.g1j2.ssutable.core.Mode;
 import com.g1j2.ssutable.core.ModeInfo;
 import com.g1j2.ssutable.core.Reservation;
 import com.g1j2.ssutable.core.Schedule;
+import com.g1j2.ssutable.core.SeatRepository;
 import com.g1j2.ssutable.core.Zone;
 import com.g1j2.ssutable.ui.view.BarView;
 import com.g1j2.ssutable.ui.view.DayTimelineView;
@@ -32,6 +33,7 @@ import java.util.Map;
 
 /** S-03 홈: 지금 모드, 혼잡도, 구역별 혼잡도, 모드 규칙. */
 public class HomeFragment extends LiveFragment {
+    private TextView offlineTag;
     private TextView clock, modeName, modeSuffix, modeHours, modeNext;
     private DayTimelineView timeline;
     private View openGroup, closedGroup;
@@ -48,6 +50,7 @@ public class HomeFragment extends LiveFragment {
                              @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_home, container, false);
         clock = v.findViewById(R.id.clock);
+        offlineTag = v.findViewById(R.id.offlineTag);
         modeName = v.findViewById(R.id.modeName);
         modeSuffix = v.findViewById(R.id.modeSuffix);
         modeHours = v.findViewById(R.id.modeHours);
@@ -95,6 +98,9 @@ public class HomeFragment extends LiveFragment {
         boolean exam = app.exam();
 
         clock.setText(Fmt.dateTime(now) + (app.clock().speed() > 1 ? "  ×" + app.clock().speed() : ""));
+
+        offlineTag.setVisibility(app.repo().connection() == SeatRepository.Connection.OFFLINE
+                ? View.VISIBLE : View.GONE);
 
         // 모드
         modeName.setText(info.mode == Mode.CLOSED ? "운영 종료" : info.mode.label);
