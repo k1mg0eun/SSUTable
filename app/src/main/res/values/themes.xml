@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.SSUTable" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/ink</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">@color/fill_soft</item>
+        <item name="colorOnPrimaryContainer">@color/ink</item>
+        <item name="colorSecondary">@color/ink2</item>
+        <item name="colorSecondaryContainer">@color/fill_soft</item>
+        <item name="colorOnSecondaryContainer">@color/ink</item>
+        <item name="colorSurface">@color/bg</item>
+        <item name="colorOnSurface">@color/ink</item>
+        <item name="colorOnSurfaceVariant">@color/ink2</item>
+        <item name="colorSurfaceContainer">@color/bg</item>
+        <item name="colorSurfaceContainerLow">@color/bg</item>
+        <item name="colorOutline">@color/line_strong</item>
+        <item name="colorOutlineVariant">@color/line</item>
+        <item name="colorError">@color/danger</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="materialButtonStyle">@style/Widget.SSU.Button</item>
+        <item name="materialButtonOutlinedStyle">@style/Widget.SSU.Button.Outlined</item>
+        <item name="borderlessButtonStyle">@style/Widget.SSU.Button.Text</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.SSU.BottomSheet</item>
+        <item name="materialSwitchStyle">@style/Widget.SSU.Switch</item>
+        <item name="snackbarStyle">@style/Widget.SSU.Snackbar</item>
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.SSU.Dialog</item>
+    </style>
+
+    <style name="ThemeOverlay.SSU.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="colorSurface">@color/bg</item>
+        <item name="colorSurfaceContainerHigh">@color/bg</item>
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="backgroundTint">@color/bg</item>
+        <item name="colorPrimary">@color/ink</item>
+        <item name="shapeAppearanceCornerExtraLarge">@style/Shape.SSU.Dialog</item>
+    </style>
+
+    <style name="Shape.SSU.Dialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <style name="Theme.SSUTable.Ticket" parent="Theme.SSUTable" />
+
+    <style name="ThemeOverlay.SSU.BottomSheet" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.SSU.BottomSheet</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="colorSurface">@color/bg</item>
+        <item name="colorSurfaceContainerLow">@color/bg</item>
+        <item name="colorSurfaceContainer">@color/bg</item>
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="colorPrimary">@color/ink</item>
+        <item name="materialButtonStyle">@style/Widget.SSU.Button</item>
+        <item name="materialButtonOutlinedStyle">@style/Widget.SSU.Button.Outlined</item>
+    </style>
+
+    <style name="Widget.SSU.BottomSheet" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="backgroundTint">@color/bg</item>
+        <item name="shapeAppearance">@style/Shape.SSU.Sheet</item>
+    </style>
+
+    <style name="Shape.SSU.Sheet" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">20dp</item>
+        <item name="cornerSizeTopRight">20dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+
+    <!-- 버튼: 주요 동작은 먹색으로 꽉 채우고, 보조 동작은 테두리만 -->
+    <style name="Widget.SSU.Button" parent="Widget.Material3.Button">
+        <item name="android:minHeight">54dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="backgroundTint">@color/button_fill</item>
+        <item name="android:textColor">@color/button_fill_text</item>
+    </style>
+
+    <style name="Widget.SSU.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:minHeight">54dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="strokeColor">@color/ink</item>
+        <item name="strokeWidth">1.5dp</item>
+        <item name="android:textColor">@color/ink</item>
+    </style>
+
+    <style name="Widget.SSU.Button.Small" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:minHeight">40dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="strokeColor">@color/line_strong</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:textColor">@color/ink</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+    </style>
+
+    <style name="Widget.SSU.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textColor">@color/ink2</item>
+    </style>
+
+    <style name="Widget.SSU.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="thumbTint">@color/switch_thumb</item>
+        <item name="trackTint">@color/switch_track</item>
+        <item name="trackDecorationTint">@color/switch_track_deco</item>
+    </style>
+
+    <style name="Widget.SSU.Snackbar" parent="Widget.Material3.Snackbar">
+        <item name="backgroundTint">@color/ink</item>
+    </style>
+
+    <style name="Widget.SSU.BottomNav" parent="Widget.Material3.BottomNavigationView">
+        <item name="backgroundTint">@color/bg</item>
+        <item name="elevation">0dp</item>
+        <item name="itemIconTint">@color/nav_item</item>
+        <item name="itemTextColor">@color/nav_item</item>
+        <item name="itemActiveIndicatorStyle">@null</item>
+        <item name="itemRippleColor">@color/fill_soft</item>
+        <item name="labelVisibilityMode">labeled</item>
+        <item name="itemTextAppearanceActive">@style/Text.Nav</item>
+        <item name="itemTextAppearanceInactive">@style/Text.Nav</item>
+        <item name="android:minHeight">64dp</item>
+    </style>
+
+    <style name="Widget.SSU.Segment" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:minHeight">40dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="strokeColor">@color/line_strong</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="backgroundTint">@color/segment_fill</item>
+        <item name="android:textColor">@color/segment_text</item>
+    </style>
+
+    <style name="Widget.SSU.Chip" parent="Widget.Material3.Chip.Filter">
+        <item name="chipBackgroundColor">@color/segment_fill</item>
+        <item name="android:textColor">@color/segment_text</item>
+        <item name="chipStrokeColor">@color/line_strong</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="checkedIconVisible">false</item>
+        <item name="chipCornerRadius">8dp</item>
+        <item name="android:textSize">13sp</item>
+        <item name="chipMinHeight">36dp</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+    </style>
+</resources>
