@@ -44,4 +44,12 @@ final class SeatClaims {
         c.deadline = ((Number) deadline).longValue();
         return c;
     }
+
+    /**
+     * 내 예약을 RESET으로 끝낼지. 둘 다 불러온 뒤(loaded) 서버 점유가 사라졌거나 남의 것이면 true.
+     * 커밋된 트랜잭션은 서버가 확인한 것이고 이벤트는 순서대로 오므로 "내 점유를 봤는지"는 따지지 않는다.
+     */
+    static boolean shouldReset(boolean loaded, SeatClaim remote, Reservation mine) {
+        return loaded && SeatClaim.lostSeat(remote, mine);
+    }
 }

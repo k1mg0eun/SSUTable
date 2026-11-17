@@ -73,8 +73,6 @@ public final class FirebaseSeatRepository implements SeatRepository {
     private boolean connected;
     private boolean seatsLoaded;
     private boolean currentLoaded;
-    /** 지금 예약의 점유가 /seats에 올라온 걸 한 번이라도 봤는지. 보기 전엔 사라짐 판정을 하지 않는다. */
-    private boolean seenMine;
     private Attempt pending;
 
     private Map<String, SeatClaim> claims = Collections.emptyMap();
@@ -174,7 +172,6 @@ public final class FirebaseSeatRepository implements SeatRepository {
     private synchronized void restore(Reservation saved) {
         if (current == null && saved != null) {
             current = saved;
-            seenMine = true;
             // 꺼져 있던 동안 지난 마감을 먼저 처리한다 (알림은 내지 않음)
             if (current.active() && !engine.tick(current, env.now(), env.inside(), env.locationTracking()).isEmpty()) {
                 changed();
@@ -190,18 +187,14 @@ public final class FirebaseSeatRepository implements SeatRepository {
     private synchronized void seatsChanged(Map<String, SeatClaim> next) {
         claims = next;
         seatsLoaded = true;
-        if (current != null && current.active()) {
-            SeatClaim c = claims.get(current.seatId);
-            if (c != null && current.id.equals(c.resId)) seenMine = true;
-        }
         checkLost();
         lastSnapshot = compute();
     }
 
     /** 내 좌석 점유가 사라졌거나 남의 것이 되면 RESET으로 끝낸다. /seats에는 다시 쓰지 않는다. */
     private void checkLost() {
-        if (!seatsLoaded || !currentLoaded || !seenMine || current == null) return;
-        if (!SeatClaim.lostSeat(claims.get(current.seatId), current)) return;
+        if (current == null) return;
+        if (!SeatClaims.shouldReset(seatsLoaded && currentLoaded, claims.get(current.seatId), current)) return;
         engine.endBy(current, env.now(), Reservation.EndReason.RESET);
         changed();
         mine().child("current").removeValue();
@@ -296,8 +289,8 @@ public final class FirebaseSeatRepository implements SeatRepository {
         synchronized (this) {
             late = !close(a);
             if (!late) {
+                // 커밋은 서버가 확인한 것. 이후 /seats 이벤트는 커밋 뒤 상태라 바로 사라짐 판정을 해도 된다
                 current = a.reservation;
-                seenMine = false;
                 changed();
                 pushReservation();
             }

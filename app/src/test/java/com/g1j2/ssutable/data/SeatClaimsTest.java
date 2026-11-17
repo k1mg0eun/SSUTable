@@ -59,4 +59,29 @@ public class SeatClaimsTest {
         assertEquals(false, SeatClaim.lostSeat(SeatClaims.parse(valid()), mine));
         assertEquals(true, SeatClaim.lostSeat(SeatClaims.parse(new HashMap<>()), mine));
     }
+
+    private static Reservation fresh() {
+        Reservation r = new Reservation();
+        r.id = "R1";
+        r.state = Reservation.State.WAITING;
+        return r;
+    }
+
+    @Test
+    public void freshReservationIsResetWhenItsClaimDisappears() {
+        // 트랜잭션 직후 첫 /seats 이벤트를 current가 정해지기 전에 받았더라도, 다음 삭제 이벤트에서 끝나야 한다
+        assertEquals(true, SeatClaims.shouldReset(true, null, fresh()));
+        Map<String, Object> other = valid();
+        other.put("resId", "R2");
+        assertEquals(true, SeatClaims.shouldReset(true, SeatClaims.parse(other), fresh()));
+    }
+
+    @Test
+    public void noResetWhileClaimIsMineOrNotLoaded() {
+        assertEquals(false, SeatClaims.shouldReset(true, SeatClaims.parse(valid()), fresh()));
+        assertEquals(false, SeatClaims.shouldReset(false, null, fresh()));
+        Reservation ended = fresh();
+        ended.state = Reservation.State.ENDED;
+        assertEquals(false, SeatClaims.shouldReset(true, null, ended));
+    }
 }
