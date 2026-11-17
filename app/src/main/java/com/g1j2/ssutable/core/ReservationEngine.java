@@ -85,6 +85,11 @@ public final class ReservationEngine {
         end(r, now, Reservation.EndReason.CANCELLED);
     }
 
+    /** 외부 사유(시연 초기화 등)로 예약을 끝낸다. */
+    public void endBy(Reservation r, long now, Reservation.EndReason reason) {
+        end(r, now, reason);
+    }
+
     /** 시간이 흐르며 일어나는 자동 처리. 일어난 일을 돌려준다. */
     public List<Event> tick(Reservation r, long now, boolean inside, boolean tracking) {
         List<Event> events = new ArrayList<>();

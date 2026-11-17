@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.g1j2.ssutable.core.Env;
+import com.g1j2.ssutable.core.FloorMerger;
 import com.g1j2.ssutable.core.FloorSnapshot;
 import com.g1j2.ssutable.core.Mode;
 import com.g1j2.ssutable.core.ModeInfo;
@@ -40,7 +41,7 @@ public final class LocalSeatRepository implements SeatRepository {
     private final SharedPreferences prefs;
     private final Env env;
     private final SeatLayout layout = SeatLayout.get();
-    private final OccupancySimulator simulator = new OccupancySimulator();
+    private final FloorMerger merger = new FloorMerger(layout, new OccupancySimulator());
     private final ReservationEngine engine = new ReservationEngine();
     private final Random random = new Random();
 
@@ -63,20 +64,7 @@ public final class LocalSeatRepository implements SeatRepository {
     }
 
     private FloorSnapshot compute() {
-        long now = env.now();
-        ModeInfo info = env.mode();
-        SeatState[] states = new SeatState[layout.size()];
-        String mine = current != null && current.active() ? current.seatId : null;
-        int minute = Schedule.minuteOfDay(now);
-        boolean exam = env.exam();
-        for (Seat seat : layout.seats) {
-            if (seat.id.equals(mine)) {
-                states[seat.index] = SeatState.MINE;
-            } else {
-                states[seat.index] = simulator.stateOf(seat, now, info.mode, exam, minute);
-            }
-        }
-        return new FloorSnapshot(now, info, layout.seats, states);
+        return merger.merge(env.now(), env.mode(), env.exam(), Collections.emptyMap(), null, current);
     }
 
     @Override
@@ -92,7 +80,21 @@ public final class LocalSeatRepository implements SeatRepository {
     // ---- 동작 ----
 
     @Override
-    public synchronized ReserveResult reserve(String seatId) {
+    public synchronized void reserve(String seatId, ReserveCallback cb) {
+        cb.done(reserveNow(seatId));
+    }
+
+    @Override
+    public Connection connection() {
+        return Connection.LOCAL;
+    }
+
+    @Override
+    public void resetAllSeats() {
+        // 로컬엔 서버 점유가 없어 할 일이 없다
+    }
+
+    private ReserveResult reserveNow(String seatId) {
         if (current != null && current.active()) return ReserveResult.ALREADY_HAVE;
         Seat seat = layout.seat(seatId);
         if (seat == null) return ReserveResult.NOT_FOUND;

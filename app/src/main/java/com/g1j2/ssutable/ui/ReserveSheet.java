@@ -36,6 +36,7 @@ public class ReserveSheet extends BottomSheetDialogFragment {
     private MaterialButton confirm;
     private final Runnable tick = this::renderTime;
     private boolean failed;
+    private boolean busy;
 
     public static ReserveSheet newInstance(String seatId) {
         ReserveSheet s = new ReserveSheet();
@@ -126,7 +127,21 @@ public class ReserveSheet extends BottomSheetDialogFragment {
             dismiss();
             return;
         }
-        SeatRepository.ReserveResult result = App.get().repo().reserve(seat.id);
+        if (busy) return;
+        busy = true;
+        CharSequence label = confirm.getText();
+        confirm.setEnabled(false);
+        confirm.setText("예약하는 중…");
+        App.get().repo().reserve(seat.id, result -> {
+            if (!isAdded()) return;
+            busy = false;
+            confirm.setText(label);
+            confirm.setEnabled(true);
+            handle(result);
+        });
+    }
+
+    private void handle(SeatRepository.ReserveResult result) {
         switch (result) {
             case OK:
                 App.get().tickNow();
@@ -146,6 +161,9 @@ public class ReserveSheet extends BottomSheetDialogFragment {
                 break;
             case ALREADY_HAVE:
                 showMessage("이미 예약한 자리가 있어요.");
+                break;
+            case ERROR:
+                showMessage("연결이 불안정해요. 다시 시도해 주세요");
                 break;
             default:
                 showMessage("좌석 정보를 찾지 못했어요. 맵에서 다시 골라 주세요.");

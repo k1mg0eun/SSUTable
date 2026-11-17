@@ -31,6 +31,15 @@ public class ReservationEngineTest {
     }
 
     @Test
+    public void endByResetCancelsUnusedTicket() {
+        Reservation r = reserveAt(at(12, 0), null);
+        engine.endBy(r, at(12, 3), Reservation.EndReason.RESET);
+        assertEquals(Reservation.State.ENDED, r.state);
+        assertEquals(Reservation.EndReason.RESET, r.endReason);
+        assertEquals(Ticket.Status.CANCELLED, r.ticket.status);
+    }
+
+    @Test
     public void studyReservationHasNoTicket() {
         assertNull(reserveAt(at(15, 0), null).ticket);
     }
