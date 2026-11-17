@@ -31,5 +31,14 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("com.google.zxing:core:3.5.3")
 
+    implementation(platform("com.google.firebase:firebase-bom:35.2.0"))
+    implementation("com.google.firebase:firebase-database")
+    implementation("com.google.firebase:firebase-auth")
+
     testImplementation("junit:junit:4.13.2")
+}
+
+// google-services.json이 있을 때만 Firebase 설정 플러그인 적용
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }
