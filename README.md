@@ -34,8 +34,8 @@ cd SSUTable && ./gradlew :app:testDebugUnitTest
 
 | 위치 | 하는 일 |
 | --- | --- |
-| `core/` | 순수 Java 규칙. 시간표(`Schedule`), 예약 상태 변화(`ReservationEngine`), 340석 배치(`SeatLayout`), 다른 학생 시뮬레이션(`OccupancySimulator`, 로컬 모드용) |
-| `core/FloorMerger`, `SeatClaim` | 서버의 좌석 점유(`SeatClaim`)와 내 예약을 합쳐 좌석 상태를 만든다(진짜 예약 우선, 만료 무시, 내 좌석은 MINE) |
+| `core/` | 순수 Java 규칙. 시간표(`Schedule`), 예약 상태 변화(`ReservationEngine`), 340석 배치(`SeatLayout`), 다른 학생 시뮬레이션(`OccupancySimulator`, 두 모드 모두 실제 점유가 없는 좌석에 쓴다) |
+| `core/FloorMerger`, `SeatClaim` | 서버의 좌석 점유(`SeatClaim`)와 내 예약을 합쳐 좌석 상태를 만든다(진짜 예약 우선, 만료 무시, 내 진행 중 예약의 좌석만 MINE) |
 | `core/DemoSettings`, `DemoState` | 시연 설정(시각 기준점, 배속, 모드 지정, 시험기간)의 인터페이스와 값 |
 | `core/SeatRepository` | 화면이 데이터에 접근하는 유일한 창구 |
 | `data/FirebaseSeatRepository` | 기본 구현. 좌석 점유는 Realtime DB 트랜잭션으로 잡고, 내 예약은 `/reservations/{uid}/current`에 저장 |
@@ -83,6 +83,7 @@ cd SSUTable && ./gradlew :app:testDebugUnitTest
 - [ ] "모든 좌석 예약 초기화"를 누르면 예약 중이던 폰이 "시연 초기화"(RESET) 화면으로 예약을 끝낸다.
 - [ ] 앱을 완전히 종료했다가 다시 켜도 내 예약이 복원된다.
 - [ ] 비행기 모드에서는 홈에 "오프라인" 태그가 뜨고 예약하면 `ERROR`가 난다. 끄면 다시 연결된다.
+- [ ] 한 폰을 와이파이 끈 채로 켠 뒤 와이파이를 켜면 → 연결됨 + 같은 시계.
 
 ## 공개 저장소 위험과 대응
 
@@ -96,7 +97,7 @@ cd SSUTable && ./gradlew :app:testDebugUnitTest
 | --- | --- |
 | 이준호 (백엔드) | `data/Firebase*`, `database.rules.json` |
 | 박준호 (프론트) | `ui/` |
-| 김고은 | 팀원 |
+| 김고은 | 1차 구현·문서 |
 
 ## 지금 버전의 한계
 
