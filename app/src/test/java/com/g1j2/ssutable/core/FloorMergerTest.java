@@ -90,12 +90,14 @@ public class FloorMergerTest {
 
     @Test
     public void claimOnClosedSeatStillShows() {
+        // 운영 종료로 바뀐 직후에도 아직 쓰고 있는 자리는 숨기지 않는다
         Seat closed = layout.seat("D-1");
-        assertTrue(closed.closedAtLunch);
         long now = at(12, 30);
-        FloorSnapshot base = merge(now, new HashMap<String, SeatClaim>(), null);
+        ModeInfo off = Schedule.resolve(now, Mode.CLOSED, false);
+        FloorSnapshot base = merger.merge(now, off, false, new HashMap<String, SeatClaim>(), null);
         assertEquals(SeatState.CLOSED, base.state(closed));
-        FloorSnapshot s = merge(now, one(closed, claim("u2", "R9", Reservation.State.IN_USE, now - MIN, now + 20 * MIN)), null);
+        FloorSnapshot s = merger.merge(now, off, false,
+                one(closed, claim("u2", "R9", Reservation.State.IN_USE, now - MIN, now + 20 * MIN)), null);
         assertNotEquals(SeatState.CLOSED, s.state(closed));
     }
 

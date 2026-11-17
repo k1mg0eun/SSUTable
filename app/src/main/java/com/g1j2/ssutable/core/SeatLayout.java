@@ -54,7 +54,7 @@ public final class SeatLayout {
         b.add(new Block(Block.Kind.DESK, 8, 104, 22, 1400, null));
         for (int i = 0; i < 43; i++) {
             float y = 110 + i * 30;
-            s.add(new Seat(s.size(), "B-" + (i + 1), Zone.B, 26, y, 24, 24, true, false));
+            s.add(new Seat(s.size(), "B-" + (i + 1), Zone.B, 26, y, 24, 24, true));
         }
 
         // A: 긴 공용 테이블 7개, 한쪽에 12석씩
@@ -66,7 +66,7 @@ public final class SeatLayout {
                 float y = side == 0 ? y0 : y0 + 56;
                 for (int j = 0; j < 12; j++) {
                     boolean outlet = j == 0 || j == 11;
-                    s.add(new Seat(s.size(), "A-" + n++, Zone.A, 104 + j * 36, y, 28, 24, outlet, false));
+                    s.add(new Seat(s.size(), "A-" + n++, Zone.A, 104 + j * 36, y, 28, 24, outlet));
                 }
             }
         }
@@ -80,10 +80,10 @@ public final class SeatLayout {
                 b.add(new Block(Block.Kind.SOFA_BACK, bx, by - 8, bx + 92, by - 3, null));
                 b.add(new Block(Block.Kind.TABLE, bx + 4, by + 27, bx + 88, by + 55, null));
                 b.add(new Block(Block.Kind.SOFA_BACK, bx, by + 85, bx + 92, by + 90, null));
-                s.add(new Seat(s.size(), "C-" + n++, Zone.C, bx + 6, by, 38, 23, false, false));
-                s.add(new Seat(s.size(), "C-" + n++, Zone.C, bx + 48, by, 38, 23, false, false));
-                s.add(new Seat(s.size(), "C-" + n++, Zone.C, bx + 6, by + 59, 38, 23, false, false));
-                s.add(new Seat(s.size(), "C-" + n++, Zone.C, bx + 48, by + 59, 38, 23, false, false));
+                s.add(new Seat(s.size(), "C-" + n++, Zone.C, bx + 6, by, 38, 23, false));
+                s.add(new Seat(s.size(), "C-" + n++, Zone.C, bx + 48, by, 38, 23, false));
+                s.add(new Seat(s.size(), "C-" + n++, Zone.C, bx + 6, by + 59, 38, 23, false));
+                s.add(new Seat(s.size(), "C-" + n++, Zone.C, bx + 48, by + 59, 38, 23, false));
             }
         }
 
@@ -92,7 +92,7 @@ public final class SeatLayout {
         n = 1;
         for (int i = 0; i < 25; i++) {
             float y = 110 + i * 52;
-            s.add(new Seat(s.size(), "D-" + n, Zone.D, 936, y, 24, 24, true, n <= 4));
+            s.add(new Seat(s.size(), "D-" + n, Zone.D, 936, y, 24, 24, true));
             n++;
         }
         // D: 4인 테이블 10개
@@ -101,11 +101,10 @@ public final class SeatLayout {
                 float tx = 608 + c * 160;
                 float ty = 130 + r * 250;
                 b.add(new Block(Block.Kind.TABLE, tx + 28, ty + 28, tx + 84, ty + 84, null));
-                boolean lunchClosed = r == 0;
-                s.add(new Seat(s.size(), "D-" + n++, Zone.D, tx + 44, ty, 24, 24, false, lunchClosed));
-                s.add(new Seat(s.size(), "D-" + n++, Zone.D, tx, ty + 44, 24, 24, false, lunchClosed));
-                s.add(new Seat(s.size(), "D-" + n++, Zone.D, tx + 88, ty + 44, 24, 24, false, lunchClosed));
-                s.add(new Seat(s.size(), "D-" + n++, Zone.D, tx + 44, ty + 88, 24, 24, false, lunchClosed));
+                s.add(new Seat(s.size(), "D-" + n++, Zone.D, tx + 44, ty, 24, 24, false));
+                s.add(new Seat(s.size(), "D-" + n++, Zone.D, tx, ty + 44, 24, 24, false));
+                s.add(new Seat(s.size(), "D-" + n++, Zone.D, tx + 88, ty + 44, 24, 24, false));
+                s.add(new Seat(s.size(), "D-" + n++, Zone.D, tx + 44, ty + 88, 24, 24, false));
             }
         }
 

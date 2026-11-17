@@ -7,11 +7,9 @@ public final class Seat {
     public final Zone zone;
     public final float left, top, right, bottom;
     public final boolean outlet;
-    /** 점심 시간에 정리 중이라 열지 않는 좌석. */
-    public final boolean closedAtLunch;
 
     Seat(int index, String id, Zone zone, float left, float top, float w, float h,
-         boolean outlet, boolean closedAtLunch) {
+         boolean outlet) {
         this.index = index;
         this.id = id;
         this.zone = zone;
@@ -20,7 +18,6 @@ public final class Seat {
         this.right = left + w;
         this.bottom = top + h;
         this.outlet = outlet;
-        this.closedAtLunch = closedAtLunch;
     }
 
     public float centerX() {

@@ -2,6 +2,7 @@ package com.g1j2.ssutable.core;
 
 import static com.g1j2.ssutable.core.ScheduleTest.at;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -32,9 +33,19 @@ public class SeatLayoutTest {
         SeatState[] st = new SeatState[layout.size()];
         for (Seat s : layout.seats) st[s.index] = sim.stateOf(s, at(12, 30), Mode.LUNCH, false);
         FloorSnapshot snap = new FloorSnapshot(at(12, 30), Schedule.resolve(at(12, 30), null, false), layout.seats, st);
-        assertEquals(328, snap.all.open);
+        assertEquals(340, snap.all.open);
         int pct = snap.all.congestionPercent();
         assertTrue("lunch peak should be busy-ish, was " + pct, pct > 40 && pct < 95);
+    }
+
+    @Test
+    public void breakfastAndLunchOpenEverySeat() {
+        SeatLayout layout = SeatLayout.get();
+        OccupancySimulator sim = new OccupancySimulator();
+        for (Seat s : layout.seats) {
+            assertNotEquals(s.id, SeatState.CLOSED, sim.stateOf(s, at(8, 30), Mode.BREAKFAST, false));
+            assertNotEquals(s.id, SeatState.CLOSED, sim.stateOf(s, at(12, 30), Mode.LUNCH, false));
+        }
     }
 
     @Test

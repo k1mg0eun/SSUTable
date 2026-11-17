@@ -13,7 +13,6 @@ public final class OccupancySimulator {
 
     public SeatState stateOf(Seat seat, long now, Mode mode, boolean exam, int minuteOfDay) {
         if (mode == Mode.CLOSED) return SeatState.CLOSED;
-        if (closedFor(seat, mode)) return SeatState.CLOSED;
 
         double p = targetRate(seat.zone, mode, exam, minuteOfDay);
         long session = (mode.meal ? 25L : 80L) * 60_000L;
@@ -25,18 +24,6 @@ public final class OccupancySimulator {
         // 세션 앞부분은 아직 도착 전(예약)인 경우가 있다
         if (within < 0.18 && hash(seat.index * 31L + 5, slot) < 0.55) return SeatState.RESERVED;
         return SeatState.IN_USE;
-    }
-
-    static boolean closedFor(Seat seat, Mode mode) {
-        switch (mode) {
-            case BREAKFAST:
-                // 천원의 아침밥 시간엔 A, B 구역만 연다
-                return seat.zone == Zone.C || seat.zone == Zone.D;
-            case LUNCH:
-                return seat.closedAtLunch;
-            default:
-                return false;
-        }
     }
 
     static double targetRate(Zone zone, Mode mode, boolean exam, int minuteOfDay) {
