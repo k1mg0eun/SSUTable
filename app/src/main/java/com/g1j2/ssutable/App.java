@@ -17,10 +17,16 @@ import com.g1j2.ssutable.core.ModeInfo;
 import com.g1j2.ssutable.core.ReservationEngine;
 import com.g1j2.ssutable.core.Schedule;
 import com.g1j2.ssutable.core.SeatRepository;
+import com.g1j2.ssutable.data.FirebaseDemoSettings;
+import com.g1j2.ssutable.data.FirebaseSeatRepository;
 import com.g1j2.ssutable.data.LocalDemoSettings;
 import com.g1j2.ssutable.data.LocalSeatRepository;
 import com.g1j2.ssutable.data.Prefs;
 import com.g1j2.ssutable.ui.Notifier;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -35,6 +41,8 @@ public class App extends Application implements Env {
 
     private Prefs prefs;
     private DemoSettings demo;
+    /** Firebase 모드일 때만 있다. 서버 시각 오프셋을 준다. */
+    private FirebaseDemoSettings sharedDemo;
     private DemoClock clock;
     private SeatRepository repo;
     private Notifier notifier;
@@ -58,16 +66,53 @@ public class App extends Application implements Env {
         super.onCreate();
         instance = this;
         prefs = new Prefs(this);
-        clock = DemoClock.system();
-        demo = new LocalDemoSettings(prefs);
+        long t = realNow();
+        clock = new DemoClock(this::realNow, t, t, 1);
+        if (FirebaseApp.initializeApp(this) == null) {
+            // google-services.json 없음: 폰 한 대 로컬 모드
+            demo = new LocalDemoSettings(prefs);
+            repo = new LocalSeatRepository(this, this);
+        } else {
+            startFirebase();
+        }
         applyDemo();
         demo.setListener(() -> {
             applyDemo();
             tickNow();
         });
-        repo = new LocalSeatRepository(this, this);
         notifier = new Notifier(this);
         handler.post(ticker);
+    }
+
+    /** 디스크 캐시를 끄고, 익명 로그인 뒤 리스너를 붙인다. 그 전까지는 CONNECTING. */
+    private void startFirebase() {
+        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        db.setPersistenceEnabled(false);
+        sharedDemo = new FirebaseDemoSettings(db);
+        demo = sharedDemo;
+        FirebaseSeatRepository firebaseRepo = new FirebaseSeatRepository(this, this, db, prefs);
+        repo = firebaseRepo;
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        FirebaseUser user = auth.getCurrentUser();
+        if (user != null) {
+            onSignedIn(firebaseRepo, user.getUid());
+            return;
+        }
+        auth.signInAnonymously().addOnCompleteListener(task -> {
+            FirebaseUser u = task.isSuccessful() && task.getResult() != null ? task.getResult().getUser() : null;
+            if (u == null) firebaseRepo.authFailed();
+            else onSignedIn(firebaseRepo, u.getUid());
+        });
+    }
+
+    private void onSignedIn(FirebaseSeatRepository firebaseRepo, String uid) {
+        sharedDemo.start();
+        firebaseRepo.attach(uid);
+    }
+
+    /** 실제 시각. Firebase 모드면 서버 시각에 맞춘 값(로컬은 오프셋 0). */
+    public long realNow() {
+        return System.currentTimeMillis() + (sharedDemo == null ? 0 : sharedDemo.serverOffset());
     }
 
     public Prefs prefs() {
@@ -111,7 +156,7 @@ public class App extends Application implements Env {
     /** 지금 시계 값을 기준점으로 한 새 설정을 만든다. */
     private DemoState nextState() {
         DemoState next = demo.current();
-        next.anchorServer = System.currentTimeMillis();
+        next.anchorServer = realNow();
         next.anchorVirtual = clock.now();
         return next;
     }

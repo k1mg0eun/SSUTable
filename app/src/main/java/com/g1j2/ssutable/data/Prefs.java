@@ -25,6 +25,8 @@ public final class Prefs {
     }
 
     private final SharedPreferences sp;
+    /** SharedPreferences는 리스너를 약하게 잡으므로 여기서 붙잡아 둔다. */
+    private SharedPreferences.OnSharedPreferenceChangeListener profileListener;
 
     public Prefs(Context context) {
         sp = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
@@ -45,6 +47,15 @@ public final class Prefs {
 
     public void saveProfile(String name, String studentId) {
         sp.edit().putString("name", name).putString("studentId", studentId).apply();
+    }
+
+    /** 이름·학번이 바뀌면(지워져도) 부른다. */
+    public void setProfileListener(Runnable onChange) {
+        if (profileListener != null) sp.unregisterOnSharedPreferenceChangeListener(profileListener);
+        profileListener = (prefs, key) -> {
+            if (key == null || "name".equals(key) || "studentId".equals(key)) onChange.run();
+        };
+        sp.registerOnSharedPreferenceChangeListener(profileListener);
     }
 
     public boolean permissionsSeen() {
