@@ -16,7 +16,6 @@ import com.g1j2.ssutable.core.Seat;
 import com.g1j2.ssutable.core.SeatLayout;
 import com.g1j2.ssutable.core.SeatRepository;
 import com.g1j2.ssutable.core.SeatState;
-import com.g1j2.ssutable.core.Ticket;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -212,9 +211,9 @@ public final class LocalSeatRepository implements SeatRepository {
     private void save() {
         try {
             JSONArray h = new JSONArray();
-            for (Reservation r : history) h.put(toJson(r));
+            for (Reservation r : history) h.put(ReservationJson.toJson(r));
             prefs.edit()
-                    .putString(KEY_CURRENT, current == null ? null : toJson(current).toString())
+                    .putString(KEY_CURRENT, current == null ? null : ReservationJson.toJson(current).toString())
                     .putString(KEY_HISTORY, h.toString())
                     .apply();
         } catch (JSONException ignored) {
@@ -225,70 +224,15 @@ public final class LocalSeatRepository implements SeatRepository {
     private void load() {
         try {
             String c = prefs.getString(KEY_CURRENT, null);
-            current = c == null ? null : fromJson(new JSONObject(c));
+            current = c == null ? null : ReservationJson.fromJson(new JSONObject(c));
             String h = prefs.getString(KEY_HISTORY, null);
             if (h != null) {
                 JSONArray arr = new JSONArray(h);
-                for (int i = 0; i < arr.length(); i++) history.add(fromJson(arr.getJSONObject(i)));
+                for (int i = 0; i < arr.length(); i++) history.add(ReservationJson.fromJson(arr.getJSONObject(i)));
             }
         } catch (JSONException | IllegalArgumentException e) {
             current = null;
             history.clear();
         }
-    }
-
-    private static JSONObject toJson(Reservation r) throws JSONException {
-        JSONObject o = new JSONObject();
-        o.put("id", r.id);
-        o.put("seatId", r.seatId);
-        o.put("mode", r.mode.name());
-        o.put("createdAt", r.createdAt);
-        o.put("arriveBy", r.arriveBy);
-        o.put("windowEnd", r.windowEnd);
-        o.put("state", r.state.name());
-        o.put("checkedInAt", r.checkedInAt);
-        o.put("endsAt", r.endsAt);
-        o.put("extended", r.extended);
-        o.put("awaySince", r.awaySince);
-        o.put("endReason", r.endReason == null ? null : r.endReason.name());
-        o.put("endedAt", r.endedAt);
-        o.put("warnedArrival", r.warnedArrival);
-        o.put("warnedEnd", r.warnedEnd);
-        if (r.ticket != null) {
-            JSONObject t = new JSONObject();
-            t.put("id", r.ticket.id);
-            t.put("name", r.ticket.name);
-            t.put("issuedAt", r.ticket.issuedAt);
-            t.put("seatId", r.ticket.seatId);
-            t.put("status", r.ticket.status.name());
-            o.put("ticket", t);
-        }
-        return o;
-    }
-
-    private static Reservation fromJson(JSONObject o) throws JSONException {
-        Reservation r = new Reservation();
-        r.id = o.getString("id");
-        r.seatId = o.getString("seatId");
-        r.mode = Mode.valueOf(o.getString("mode"));
-        r.createdAt = o.getLong("createdAt");
-        r.arriveBy = o.getLong("arriveBy");
-        r.windowEnd = o.getLong("windowEnd");
-        r.state = Reservation.State.valueOf(o.getString("state"));
-        r.checkedInAt = o.getLong("checkedInAt");
-        r.endsAt = o.getLong("endsAt");
-        r.extended = o.getBoolean("extended");
-        r.awaySince = o.getLong("awaySince");
-        String reason = o.optString("endReason", "");
-        r.endReason = reason.isEmpty() || "null".equals(reason) ? null : Reservation.EndReason.valueOf(reason);
-        r.endedAt = o.getLong("endedAt");
-        r.warnedArrival = o.optBoolean("warnedArrival");
-        r.warnedEnd = o.optBoolean("warnedEnd");
-        JSONObject t = o.optJSONObject("ticket");
-        if (t != null) {
-            r.ticket = new Ticket(t.getString("id"), t.getString("name"), t.getLong("issuedAt"),
-                    t.getString("seatId"), Ticket.Status.valueOf(t.getString("status")));
-        }
-        return r;
     }
 }
