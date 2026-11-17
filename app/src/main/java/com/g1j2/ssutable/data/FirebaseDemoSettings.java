@@ -1,5 +1,7 @@
 package com.g1j2.ssutable.data;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import com.g1j2.ssutable.core.DemoSettings;
@@ -21,8 +23,12 @@ import java.util.Map;
  * /demo가 비어 있으면 실제 시각, 배속 1, 자동 모드, 시험기간 아님.
  */
 public final class FirebaseDemoSettings implements DemoSettings {
+    private static final String TAG = "FirebaseDemoSettings";
+
     private final DatabaseReference demoRef;
     private DemoState state = new DemoState();
+    /** 서버에서 마지막으로 받은 값. 쓰기가 실패하면 이 값으로 되돌린다. */
+    private DemoState serverState = new DemoState();
     private volatile long serverOffset;
     private Runnable listener;
     private boolean started;
@@ -49,7 +55,7 @@ public final class FirebaseDemoSettings implements DemoSettings {
     }
 
     /** 로그인 뒤 /demo 듣기를 시작한다. */
-    public void start() {
+    public synchronized void start() {
         if (started) return;
         started = true;
         demoRef.addValueEventListener(new ValueEventListener() {
@@ -57,7 +63,8 @@ public final class FirebaseDemoSettings implements DemoSettings {
             public void onDataChange(@NonNull DataSnapshot snap) {
                 DemoState next = parse(snap.getValue());
                 synchronized (FirebaseDemoSettings.this) {
-                    state = next;
+                    serverState = next;
+                    state = copy(next);
                 }
                 notifyChanged();
             }
@@ -74,9 +81,17 @@ public final class FirebaseDemoSettings implements DemoSettings {
         return copy(state);
     }
 
+    /**
+     * 로그인 전(start 전)에는 쓰지 않는다. 혼자만 다른 시계로 돌면 안 되기 때문.
+     * 서버가 거절하면 마지막 서버 값으로 되돌린다.
+     */
     @Override
     public void write(DemoState next) {
         synchronized (this) {
+            if (!started) {
+                Log.w(TAG, "not signed in; demo write ignored");
+                return;
+            }
             state = copy(next);
         }
         Map<String, Object> m = new HashMap<>();
@@ -86,7 +101,14 @@ public final class FirebaseDemoSettings implements DemoSettings {
         if (next.forcedMode != null) m.put("forcedMode", next.forcedMode.name());
         m.put("exam", next.exam);
         m.put("updatedAt", ServerValue.TIMESTAMP);
-        demoRef.setValue(m);
+        demoRef.setValue(m, (error, ref) -> {
+            if (error == null) return;
+            Log.w(TAG, "demo write failed: " + error.getMessage());
+            synchronized (FirebaseDemoSettings.this) {
+                state = copy(serverState);
+            }
+            notifyChanged();
+        });
         notifyChanged();
     }
 

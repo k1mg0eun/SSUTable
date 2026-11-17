@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import com.g1j2.ssutable.core.DemoClock;
@@ -26,7 +27,10 @@ import com.g1j2.ssutable.ui.Notifier;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -37,6 +41,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class App extends Application implements Env {
     private static final long TICK_MS = 250;
+    private static final long SIGN_IN_RETRY_MS = 5_000;
+    private static final long SIGN_IN_RETRY_MAX_MS = 60_000;
     private static App instance;
 
     private Prefs prefs;
@@ -45,9 +51,16 @@ public class App extends Application implements Env {
     private FirebaseDemoSettings sharedDemo;
     private DemoClock clock;
     private SeatRepository repo;
+    /** Firebase 모드일 때만 있다. */
+    private FirebaseSeatRepository firebaseRepo;
+    private boolean signedIn;
+    private boolean signingIn;
+    private long signInBackoff = SIGN_IN_RETRY_MS;
     private Notifier notifier;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
+
+    private final Runnable retrySignIn = this::signIn;
 
     private final Runnable ticker = new Runnable() {
         @Override
@@ -90,22 +103,52 @@ public class App extends Application implements Env {
         db.setPersistenceEnabled(false);
         sharedDemo = new FirebaseDemoSettings(db);
         demo = sharedDemo;
-        FirebaseSeatRepository firebaseRepo = new FirebaseSeatRepository(this, this, db, prefs);
+        firebaseRepo = new FirebaseSeatRepository(this, this, db, prefs);
         repo = firebaseRepo;
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-        FirebaseUser user = auth.getCurrentUser();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            onSignedIn(firebaseRepo, user.getUid());
+            onSignedIn(user.getUid());
             return;
         }
-        auth.signInAnonymously().addOnCompleteListener(task -> {
+        // 로그인이 실패해도 서버에 다시 붙으면(또는 잠시 뒤) 다시 시도한다
+        db.getReference(".info/connected").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snap) {
+                if (!Boolean.TRUE.equals(snap.getValue())) return;
+                handler.removeCallbacks(retrySignIn);
+                signInBackoff = SIGN_IN_RETRY_MS;
+                signIn();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
+        signIn();
+    }
+
+    /** 익명 로그인 한 번. 이미 됐거나 진행 중이면 무시. 실패하면 점점 길게 기다렸다 다시 한다. */
+    private void signIn() {
+        if (signedIn || signingIn) return;
+        signingIn = true;
+        FirebaseAuth.getInstance().signInAnonymously().addOnCompleteListener(task -> {
+            signingIn = false;
             FirebaseUser u = task.isSuccessful() && task.getResult() != null ? task.getResult().getUser() : null;
-            if (u == null) firebaseRepo.authFailed();
-            else onSignedIn(firebaseRepo, u.getUid());
+            if (u != null) {
+                onSignedIn(u.getUid());
+                return;
+            }
+            firebaseRepo.authFailed();
+            handler.removeCallbacks(retrySignIn);
+            handler.postDelayed(retrySignIn, signInBackoff);
+            signInBackoff = Math.min(signInBackoff * 2, SIGN_IN_RETRY_MAX_MS);
         });
     }
 
-    private void onSignedIn(FirebaseSeatRepository firebaseRepo, String uid) {
+    private void onSignedIn(String uid) {
+        if (signedIn) return;
+        signedIn = true;
+        handler.removeCallbacks(retrySignIn);
         sharedDemo.start();
         firebaseRepo.attach(uid);
     }

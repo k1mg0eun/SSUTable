@@ -3,6 +3,7 @@ package com.g1j2.ssutable.data;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
 
@@ -42,6 +43,7 @@ import java.util.Random;
  */
 public final class FirebaseSeatRepository implements SeatRepository {
     private static final long RESERVE_TIMEOUT_MS = 10_000;
+    private static final long CONNECT_GRACE_MS = 5_000;
 
     /** 진행 중인 예약 시도 하나. 콜백은 timeout과 결과 중 먼저 온 쪽이 한 번만 부른다. */
     private static final class Attempt {
@@ -65,6 +67,7 @@ public final class FirebaseSeatRepository implements SeatRepository {
     private final FloorMerger merger = new FloorMerger(layout, new OccupancySimulator());
     private final ReservationEngine engine = new ReservationEngine();
     private final Random random = new Random();
+    private final long createdAt = SystemClock.elapsedRealtime();
 
     private String uid;
     private boolean authFailed;
@@ -107,6 +110,7 @@ public final class FirebaseSeatRepository implements SeatRepository {
         synchronized (this) {
             if (uid != null) return;
             uid = signedInUid;
+            authFailed = false;
         }
         writeProfile();
         profile.setProfileListener(this::writeProfile);
@@ -143,7 +147,7 @@ public final class FirebaseSeatRepository implements SeatRepository {
         });
     }
 
-    /** 익명 로그인 실패: 오프라인으로 보이고 예약은 ERROR. */
+    /** 익명 로그인 실패: 다시 시도해 attach될 때까지 오프라인으로 보이고 예약은 ERROR. */
     public synchronized void authFailed() {
         authFailed = true;
     }
@@ -222,10 +226,14 @@ public final class FirebaseSeatRepository implements SeatRepository {
         return history.list();
     }
 
+    /** 연결·로그인·첫 불러오기가 CONNECT_GRACE_MS 안에 끝나지 않으면 연결 중 대신 오프라인으로 보인다. */
     @Override
     public synchronized Connection connection() {
         if (authFailed || loadFailed) return Connection.OFFLINE;
-        if (uid == null || !everConnected) return Connection.CONNECTING;
+        if (uid == null || !everConnected || !seatsLoaded || !currentLoaded) {
+            return SystemClock.elapsedRealtime() - createdAt < CONNECT_GRACE_MS
+                    ? Connection.CONNECTING : Connection.OFFLINE;
+        }
         return connected ? Connection.ONLINE : Connection.OFFLINE;
     }
 
