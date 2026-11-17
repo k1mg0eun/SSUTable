@@ -25,6 +25,8 @@ public final class Prefs {
     }
 
     private final SharedPreferences sp;
+    /** SharedPreferences는 리스너를 약하게 잡으므로 여기서 붙잡아 둔다. */
+    private SharedPreferences.OnSharedPreferenceChangeListener profileListener;
 
     public Prefs(Context context) {
         sp = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
@@ -45,6 +47,15 @@ public final class Prefs {
 
     public void saveProfile(String name, String studentId) {
         sp.edit().putString("name", name).putString("studentId", studentId).apply();
+    }
+
+    /** 이름·학번이 바뀌면(지워져도) 부른다. */
+    public void setProfileListener(Runnable onChange) {
+        if (profileListener != null) sp.unregisterOnSharedPreferenceChangeListener(profileListener);
+        profileListener = (prefs, key) -> {
+            if (key == null || "name".equals(key) || "studentId".equals(key)) onChange.run();
+        };
+        sp.registerOnSharedPreferenceChangeListener(profileListener);
     }
 
     public boolean permissionsSeen() {
@@ -125,7 +136,12 @@ public final class Prefs {
                 .putInt("speed", speed).apply();
     }
 
-    public void clearAll() {
-        sp.edit().clear().apply();
+    /** 내 정보·알림·위치 설정만 지운다. 시연 설정(시계·배속·모드·시험)은 남긴다. */
+    public void clearPersonal() {
+        sp.edit().remove("name").remove("studentId").remove("permissionsSeen")
+                .remove("inside").remove("demoPanel").remove("conflictNext").apply();
+        SharedPreferences.Editor e = sp.edit();
+        for (Alert a : Alert.values()) e.remove("alert_" + a.name());
+        e.apply();
     }
 }

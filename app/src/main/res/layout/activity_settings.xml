@@ -187,6 +187,13 @@
                     android:textSize="15sp" />
 
                 <TextView
+                    android:id="@+id/connectionStatus"
+                    style="@style/Text.Sub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp" />
+
+                <TextView
                     style="@style/Text.Section"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -369,6 +376,16 @@
                     android:text="다음 예약을 동시 예약 실패로 만들기"
                     android:textColor="@color/ink"
                     android:textSize="15sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/resetSeats"
+                    style="@style/Widget.SSU.Button.Text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:paddingStart="0dp"
+                    android:text="모든 좌석 예약 초기화"
+                    android:textColor="@color/danger" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/resetAll"

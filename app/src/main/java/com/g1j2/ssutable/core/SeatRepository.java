@@ -9,14 +9,25 @@ import java.util.List;
  */
 public interface SeatRepository {
 
-    enum ReserveResult { OK, TAKEN, ALREADY_HAVE, CLOSED, NOT_FOUND }
+    enum ReserveResult { OK, TAKEN, ALREADY_HAVE, CLOSED, NOT_FOUND, ERROR }
+
+    /** 예약 결과를 받는 콜백. 항상 메인 스레드에서 불린다. */
+    interface ReserveCallback { void done(ReserveResult result); }
+
+    /** 서버 연결 상태. 로컬 저장소는 항상 LOCAL. */
+    enum Connection { LOCAL, CONNECTING, ONLINE, OFFLINE }
 
     FloorSnapshot snapshot();
 
     /** 진행 중이거나, 끝났지만 아직 확인하지 않은 예약. 없으면 null. */
     Reservation current();
 
-    ReserveResult reserve(String seatId);
+    void reserve(String seatId, ReserveCallback cb);
+
+    Connection connection();
+
+    /** 시연용: 모든 좌석 점유를 지운다. 로컬은 아무것도 하지 않는다. */
+    void resetAllSeats();
 
     boolean arrive();
 

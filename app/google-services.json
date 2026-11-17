@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "635627469918",
+    "firebase_url": "https://ssutable-4746b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "ssutable-4746b",
+    "storage_bucket": "ssutable-4746b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635627469918:android:b5833af5c9e98787fcc8cf",
+        "android_client_info": {
+          "package_name": "com.g1j2.ssutable"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQn2STCZd3LWn4RTM0HrAqszV_0B6VUhM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

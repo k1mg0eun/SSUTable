@@ -52,6 +52,19 @@ public final class DemoClock {
         jumpTo(real.now());
     }
 
+    /** 원격 상태를 그대로 반영한다. anchor가 -1이면 실제 시각으로 맞춘다. */
+    public void apply(long anchorReal, long anchorVirtual, int speed) {
+        if (anchorReal < 0 || anchorVirtual < 0) {
+            long t = real.now();
+            this.anchorReal = t;
+            this.anchorVirtual = t;
+        } else {
+            this.anchorReal = anchorReal;
+            this.anchorVirtual = anchorVirtual;
+        }
+        this.speed = Math.max(1, speed);
+    }
+
     public long anchorReal() {
         return anchorReal;
     }

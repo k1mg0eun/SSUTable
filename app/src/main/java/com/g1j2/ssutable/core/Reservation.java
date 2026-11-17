@@ -10,7 +10,8 @@ public final class Reservation {
         TIME_UP("시간 만료", "이용 시간이 끝나 체크아웃됐어요"),
         NO_SHOW("10분 미도착", "10분 안에 도착하지 않아 예약이 취소됐어요"),
         AWAY_TIMEOUT("30분 이탈", "30분 넘게 자리를 비워 체크아웃됐어요"),
-        CANCELLED("예약 취소", "예약을 취소했어요");
+        CANCELLED("예약 취소", "예약을 취소했어요"),
+        RESET("시연 초기화", "시연 데이터가 초기화돼 예약이 끝났어요");
 
         public final String label;
         public final String headline;

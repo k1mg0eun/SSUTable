@@ -1,0 +1,77 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "seats": {
+      ".read": "auth != null",
+      ".write": "auth != null && !newData.exists()",
+      "$seatId": {
+        ".validate": "$seatId.matches(/^[A-D]-[0-9]+$/) && newData.hasChildren(['uid', 'resId', 'state', 'since', 'deadline'])",
+        ".write": "auth != null && (!newData.exists() || newData.child('uid').val() === auth.uid)",
+        "uid": { ".validate": "newData.isString()" },
+        "resId": { ".validate": "newData.isString()" },
+        "state": { ".validate": "newData.isString() && (newData.val() === 'WAITING' || newData.val() === 'IN_USE' || newData.val() === 'AWAY')" },
+        "since": { ".validate": "newData.isNumber()" },
+        "deadline": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "reservations": {
+      "$uid": {
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null && $uid === auth.uid",
+        "current": {
+          ".validate": "newData.hasChildren(['id', 'seatId', 'mode', 'createdAt', 'arriveBy', 'windowEnd', 'state', 'checkedInAt', 'endsAt', 'extended', 'awaySince', 'endedAt', 'warnedArrival', 'warnedEnd'])",
+          "id": { ".validate": "newData.isString()" },
+          "seatId": { ".validate": "newData.isString()" },
+          "mode": { ".validate": "newData.isString()" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "arriveBy": { ".validate": "newData.isNumber()" },
+          "windowEnd": { ".validate": "newData.isNumber()" },
+          "state": { ".validate": "newData.isString()" },
+          "checkedInAt": { ".validate": "newData.isNumber()" },
+          "endsAt": { ".validate": "newData.isNumber()" },
+          "extended": { ".validate": "newData.isBoolean()" },
+          "awaySince": { ".validate": "newData.isNumber()" },
+          "endReason": { ".validate": "newData.isString()" },
+          "endedAt": { ".validate": "newData.isNumber()" },
+          "warnedArrival": { ".validate": "newData.isBoolean()" },
+          "warnedEnd": { ".validate": "newData.isBoolean()" },
+          "ticket": {
+            ".validate": "newData.hasChildren(['id', 'name', 'issuedAt', 'seatId', 'status'])",
+            "id": { ".validate": "newData.isString()" },
+            "name": { ".validate": "newData.isString()" },
+            "issuedAt": { ".validate": "newData.isNumber()" },
+            "seatId": { ".validate": "newData.isString()" },
+            "status": { ".validate": "newData.isString()" },
+            "$other": { ".validate": false }
+          },
+          "$other": { ".validate": false }
+        },
+        "$other": { ".validate": false }
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && $uid === auth.uid",
+        ".write": "auth != null && $uid === auth.uid",
+        ".validate": "newData.hasChildren(['name', 'studentId'])",
+        "name": { ".validate": "newData.isString()" },
+        "studentId": { ".validate": "newData.isString()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "demo": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".validate": "newData.hasChildren(['anchorServer', 'anchorVirtual', 'speed', 'exam'])",
+      "anchorServer": { ".validate": "newData.isNumber()" },
+      "anchorVirtual": { ".validate": "newData.isNumber()" },
+      "speed": { ".validate": "newData.isNumber() && newData.val() >= 1" },
+      "forcedMode": { ".validate": "newData.isString() && (newData.val() === 'BREAKFAST' || newData.val() === 'LUNCH' || newData.val() === 'STUDY' || newData.val() === 'CLOSED')" },
+      "exam": { ".validate": "newData.isBoolean()" },
+      "updatedAt": { ".validate": "newData.isNumber()" },
+      "$other": { ".validate": false }
+    }
+  }
+}
