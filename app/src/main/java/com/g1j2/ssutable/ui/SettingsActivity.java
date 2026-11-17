@@ -67,11 +67,10 @@ public class SettingsActivity extends AppCompatActivity {
 
         // 시연 모드
         MaterialButtonToggleGroup modeGroup = findViewById(R.id.modeGroup);
-        modeGroup.check(idFor(prefs.forcedMode()));
+        modeGroup.check(idFor(App.get().demo().current().forcedMode));
         modeGroup.addOnButtonCheckedListener((g, id, checked) -> {
             if (!checked) return;
-            prefs.setForcedMode(modeFor(id));
-            App.get().tickNow();
+            App.get().setForcedMode(modeFor(id));
         });
 
         LinearLayout jumpRow = findViewById(R.id.jumpRow);
@@ -93,10 +92,9 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         MaterialSwitch exam = findViewById(R.id.examSwitch);
-        exam.setChecked(prefs.exam());
+        exam.setChecked(App.get().exam());
         exam.setOnCheckedChangeListener((b, on) -> {
-            prefs.setExam(on);
-            App.get().tickNow();
+            App.get().setExam(on);
         });
 
         MaterialSwitch demoPanel = findViewById(R.id.demoPanelSwitch);
@@ -109,7 +107,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         findViewById(R.id.resetAll).setOnClickListener(v -> new MaterialAlertDialogBuilder(this)
                 .setTitle("모든 데이터를 지울까요?")
-                .setMessage("내 정보, 예약, 이용 기록, 시연 설정이 모두 지워지고 첫 화면으로 돌아가요.")
+                .setMessage("내 정보, 예약, 이용 기록이 모두 지워지고(시연 설정은 그대로 유지돼요) 첫 화면으로 돌아가요.")
                 .setPositiveButton("지우기", (d, w) -> {
                     App.get().resetAll();
                     startActivity(new Intent(this, OnboardingActivity.class)

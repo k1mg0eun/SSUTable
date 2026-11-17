@@ -125,7 +125,12 @@ public final class Prefs {
                 .putInt("speed", speed).apply();
     }
 
-    public void clearAll() {
-        sp.edit().clear().apply();
+    /** 내 정보·알림·위치 설정만 지운다. 시연 설정(시계·배속·모드·시험)은 남긴다. */
+    public void clearPersonal() {
+        sp.edit().remove("name").remove("studentId").remove("permissionsSeen")
+                .remove("inside").remove("demoPanel").remove("conflictNext").apply();
+        SharedPreferences.Editor e = sp.edit();
+        for (Alert a : Alert.values()) e.remove("alert_" + a.name());
+        e.apply();
     }
 }

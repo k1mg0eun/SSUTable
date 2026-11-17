@@ -9,12 +9,15 @@ import android.os.Looper;
 import androidx.core.content.ContextCompat;
 
 import com.g1j2.ssutable.core.DemoClock;
+import com.g1j2.ssutable.core.DemoSettings;
+import com.g1j2.ssutable.core.DemoState;
 import com.g1j2.ssutable.core.Env;
 import com.g1j2.ssutable.core.Mode;
 import com.g1j2.ssutable.core.ModeInfo;
 import com.g1j2.ssutable.core.ReservationEngine;
 import com.g1j2.ssutable.core.Schedule;
 import com.g1j2.ssutable.core.SeatRepository;
+import com.g1j2.ssutable.data.LocalDemoSettings;
 import com.g1j2.ssutable.data.LocalSeatRepository;
 import com.g1j2.ssutable.data.Prefs;
 import com.g1j2.ssutable.ui.Notifier;
@@ -31,6 +34,7 @@ public class App extends Application implements Env {
     private static App instance;
 
     private Prefs prefs;
+    private DemoSettings demo;
     private DemoClock clock;
     private SeatRepository repo;
     private Notifier notifier;
@@ -54,11 +58,13 @@ public class App extends Application implements Env {
         super.onCreate();
         instance = this;
         prefs = new Prefs(this);
-        if (prefs.anchorReal() < 0) {
-            clock = DemoClock.system();
-        } else {
-            clock = new DemoClock(System::currentTimeMillis, prefs.anchorReal(), prefs.anchorVirtual(), prefs.speed());
-        }
+        clock = DemoClock.system();
+        demo = new LocalDemoSettings(prefs);
+        applyDemo();
+        demo.setListener(() -> {
+            applyDemo();
+            tickNow();
+        });
         repo = new LocalSeatRepository(this, this);
         notifier = new Notifier(this);
         handler.post(ticker);
@@ -91,32 +97,59 @@ public class App extends Application implements Env {
         for (Runnable r : listeners) r.run();
     }
 
-    // ---- 시연용 시계 조작 ----
+    // ---- 시연 설정 (시계·모드·시험) ----
+
+    public DemoSettings demo() {
+        return demo;
+    }
+
+    private void applyDemo() {
+        DemoState d = demo.current();
+        clock.apply(d.anchorServer, d.anchorVirtual, d.speed);
+    }
+
+    /** 지금 시계 값을 기준점으로 한 새 설정을 만든다. */
+    private DemoState nextState() {
+        DemoState next = demo.current();
+        next.anchorServer = System.currentTimeMillis();
+        next.anchorVirtual = clock.now();
+        return next;
+    }
 
     public void setSpeed(int speed) {
-        clock.setSpeed(speed);
-        saveClock();
+        DemoState next = nextState();
+        next.speed = Math.max(1, speed);
+        demo.write(next);
     }
 
     public void jumpToMinute(int minuteOfDay) {
-        clock.jumpTo(Schedule.atMinute(clock.now(), minuteOfDay));
-        saveClock();
+        DemoState next = nextState();
+        next.anchorVirtual = Schedule.atMinute(clock.now(), minuteOfDay);
+        demo.write(next);
     }
 
     public void resetClock() {
-        clock.resetToReal();
-        saveClock();
+        DemoState next = nextState();
+        next.anchorVirtual = next.anchorServer;
+        demo.write(next);
     }
 
-    private void saveClock() {
-        prefs.saveClock(clock.anchorReal(), clock.anchorVirtual(), clock.speed());
-        tickNow();
+    public void setForcedMode(Mode mode) {
+        DemoState next = demo.current();
+        next.forcedMode = mode;
+        demo.write(next);
     }
 
+    public void setExam(boolean on) {
+        DemoState next = demo.current();
+        next.exam = on;
+        demo.write(next);
+    }
+
+    /** 내 폰 데이터만 지운다. 시연 설정(시계·배속·모드·시험)은 남긴다. */
     public void resetAll() {
         repo.clearAll();
-        prefs.clearAll();
-        clock = DemoClock.system();
+        prefs.clearPersonal();
     }
 
     // ---- Env ----
@@ -128,13 +161,13 @@ public class App extends Application implements Env {
 
     @Override
     public ModeInfo mode() {
-        Mode forced = prefs.forcedMode();
-        return Schedule.resolve(now(), forced, prefs.exam());
+        DemoState d = demo.current();
+        return Schedule.resolve(now(), d.forcedMode, d.exam);
     }
 
     @Override
     public boolean exam() {
-        return prefs.exam();
+        return demo.current().exam;
     }
 
     @Override
