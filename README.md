@@ -13,7 +13,7 @@ Android Studio에서 `SSUTable` 폴더를 열고 Run. 또는:
 cd SSUTable && ./gradlew :app:installDebug
 ```
 
-규칙 테스트(JUnit 18개):
+규칙 테스트(JUnit):
 
 ```bash
 cd SSUTable && ./gradlew :app:testDebugUnitTest
@@ -34,9 +34,15 @@ cd SSUTable && ./gradlew :app:testDebugUnitTest
 
 | 위치 | 하는 일 |
 | --- | --- |
-| `core/` | 순수 Java 규칙. 시간표(`Schedule`), 예약 상태 변화(`ReservationEngine`), 340석 배치(`SeatLayout`), 다른 학생 시뮬레이션(`OccupancySimulator`) |
-| `core/SeatRepository` | 화면이 데이터에 접근하는 유일한 창구. Firebase로 바꿀 때 이 인터페이스만 새로 구현하면 된다 |
-| `data/LocalSeatRepository` | 지금 구현. 내 예약은 SharedPreferences에 JSON으로 저장 |
+| `core/` | 순수 Java 규칙. 시간표(`Schedule`), 예약 상태 변화(`ReservationEngine`), 340석 배치(`SeatLayout`), 다른 학생 시뮬레이션(`OccupancySimulator`, 로컬 모드용) |
+| `core/FloorMerger`, `SeatClaim` | 서버의 좌석 점유(`SeatClaim`)와 내 예약을 합쳐 좌석 상태를 만든다(진짜 예약 우선, 만료 무시, 내 좌석은 MINE) |
+| `core/DemoSettings`, `DemoState` | 시연 설정(시각 기준점, 배속, 모드 지정, 시험기간)의 인터페이스와 값 |
+| `core/SeatRepository` | 화면이 데이터에 접근하는 유일한 창구 |
+| `data/FirebaseSeatRepository` | 기본 구현. 좌석 점유는 Realtime DB 트랜잭션으로 잡고, 내 예약은 `/reservations/{uid}/current`에 저장 |
+| `data/FirebaseDemoSettings` | `/demo`를 듣고 쓰는 공유 시연 설정과 서버 시각 오프셋 |
+| `data/SeatClaims`, `ReservationJson` | `/seats` 항목과 예약을 DB에 쓰는 모양으로 바꾸는 변환 |
+| `data/LocalSeatRepository`, `LocalDemoSettings` | `google-services.json`이 없을 때만 쓰는 로컬 구현. SharedPreferences에 저장 |
+| `data/HistoryStore`, `Prefs` | 이 폰의 이용 기록과 설정 값 저장 |
 | `ui/` | 화면. `SeatMapView`가 도면을 직접 그린다 |
 
 ## Firebase 설정 (처음 한 번)

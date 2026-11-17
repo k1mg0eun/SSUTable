@@ -133,7 +133,6 @@ public class SettingsActivity extends AppCompatActivity {
         App.get().addListener(tick);
         renderPermissions();
         renderClock();
-        renderConnection();
         ((TextView) findViewById(R.id.historyCount)).setText(App.get().repo().history().size() + "건");
         MaterialSwitch conflict = findViewById(R.id.conflictSwitch);
         conflict.setChecked(prefs.conflictNext());
