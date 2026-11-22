@@ -365,7 +365,7 @@ public class SeatMapView extends View {
         text.setColor(cInk2);
         text.setTextSize(11 * dp * px1);
         text.setFakeBoldText(true);
-        canvas.drawText("A  " + Zone.A.label, 670, 238, text);
+        canvas.drawText("A  " + Zone.A.label, 670, 232, text);
         canvas.drawText("B  " + Zone.B.label, 290, 30, text);
         canvas.drawText("C  " + Zone.C.label, 350, 112, text);
         canvas.drawText("D  " + Zone.D.label, 345, 600, text);

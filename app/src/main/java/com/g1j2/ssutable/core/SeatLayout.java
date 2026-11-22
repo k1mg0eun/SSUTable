@@ -47,50 +47,57 @@ public final class SeatLayout {
     }
 
     private SeatLayout() {
-        // 위쪽: 출입구, 작은 테이블
-        b.add(new Block(Block.Kind.DOOR, 63, 15, 163, 35, "출입구"));
-        b.add(new Block(Block.Kind.DOOR, 176, 15, 276, 35, "출입구"));
+        // 위쪽: 출입구, 작은 테이블 (오른쪽 흰 테이블 줄과 x를 맞춤)
+        b.add(new Block(Block.Kind.DOOR, 60, 15, 160, 35, "출입구"));
+        b.add(new Block(Block.Kind.DOOR, 180, 15, 280, 35, "출입구"));
         sideTable(440, 10, 90, 50);
-        sideTable(567, 10, 90, 50);
-        for (float[] r : new float[][]{{665, 10}, {840, 10}, {665, 100}, {845, 100}}) table4(r[0], r[1], 155, 75);
+        sideTable(560, 10, 90, 50);
+        for (float y : new float[]{10, 100}) {
+            table4(670, y, 155, 75);
+            table4(845, y, 155, 75);
+        }
 
-        // 왼쪽 창가: 창, 벽돌 기둥, 1인석 줄(마주 보는 두 줄)과 소파석
-        b.add(new Block(Block.Kind.WINDOW, 0, 120, 10, 1580, null));
-        for (float y : new float[]{102, 498, 810, 1088, 1435}) {
+        // 왼쪽 창가: 창, 같은 간격의 벽돌 기둥, 마주 보는 1인석 두 줄과 소파석 (세 묶음 위아래를 맞춤)
+        b.add(new Block(Block.Kind.WINDOW, 0, 100, 10, 1710, null));
+        for (float y : new float[]{120, 450, 780, 1110, 1440}) {
             b.add(new Block(Block.Kind.PILLAR, 4, y - 20, 44, y + 20, null));
         }
-        singleCol(40, 100, 385, 9, 0);
-        singleCol(156, 101, 385, 9, 2);
-        sofaCol(200, 100, 385, 16, 0);
-        singleCol(40, 1115, 270, 8, 0);
-        singleCol(150, 1110, 270, 6, 2);
-        sofaCol(200, 1115, 270, 12, 0);
-        singleCol(40, 1440, 270, 5, 0);
-        singleCol(155, 1440, 270, 6, 2);
-        sofaCol(205, 1435, 270, 12, 0);
-        // 왼쪽 가운데 흰 테이블 (10인 세로 테이블 4개)
-        for (float[] r : new float[][]{{60, 565}, {211, 565}, {65, 850}, {211, 855}}) colTable(Zone.A, r[0], r[1], 5, 5);
+        int[][] singles = {{9, 9}, {8, 6}, {5, 6}};
+        int[] sofas = {16, 12, 12};
+        float[][] groups = {{100, 385}, {1110, 270}, {1440, 270}};
+        for (int g = 0; g < 3; g++) {
+            float y = groups[g][0], h = groups[g][1];
+            singleCol(40, y, h, singles[g][0], 0);
+            singleCol(150, y, h, singles[g][1], 2);
+            sofaCol(200, y, h, sofas[g], 0);
+        }
+        // 왼쪽 가운데 흰 테이블 (10인 세로 테이블 2×2)
+        for (float y : new float[]{565, 850}) {
+            colTable(Zone.A, 60, y, 5, 5);
+            colTable(Zone.A, 210, y, 5, 5);
+        }
 
-        // 가운데: 원형 기둥 3개와 기둥을 두르는 타원형 테이블
+        // 가운데: 원형 기둥 3개와 기둥을 두르는 타원형 테이블, 사이 화분
         curveAround(510, 280, Zone.C, 0);
-        curveAround(505, 770, Zone.D, 0);
-        curveAround(645, 1200, Zone.A, 2);
-        b.add(new Block(Block.Kind.PLANTER, 425, 515, 545, 555, null));
-        b.add(new Block(Block.Kind.PLANTER, 425, 965, 545, 1005, null));
+        curveAround(510, 770, Zone.D, 0);
+        b.add(new Block(Block.Kind.PLANTER, 450, 505, 570, 545, null));
+        b.add(new Block(Block.Kind.PLANTER, 450, 990, 570, 1030, null));
 
-        // 오른쪽 위: 18인 가로 테이블 6개 (마지막은 17석)
-        for (float[] r : new float[][]{{670, 245}, {675, 345}, {675, 475}, {680, 580}, {680, 735}}) rowTable(Zone.A, r[0], r[1], 9, 9);
-        rowTable(Zone.A, 680, 880, 9, 8);
+        // 오른쪽 위: 18인 가로 테이블 6개를 같은 간격으로 (마지막은 17석)
+        for (int i = 0; i < 6; i++) rowTable(Zone.A, 670, 240 + i * 125, 9, i == 5 ? 8 : 9);
 
-        // 아래쪽: 6인 테이블 3개(왼쪽), 4인 테이블 3개(오른쪽)
-        for (float[] r : new float[][]{{395, 1150}, {400, 1365}, {405, 1565}}) rowTable(Zone.A, r[0], r[1], 3, 3);
-        for (float[] r : new float[][]{{905, 1150}, {905, 1350}, {925, 1550}}) rowTable(Zone.A, r[0], r[1], 2, 2);
+        // 아래쪽: 6인 테이블(왼쪽)과 4인 테이블(오른쪽)을 같은 줄에, 가운데 흰 타원형 테이블
+        for (float y : new float[]{1150, 1360, 1570}) {
+            rowTable(Zone.A, 400, y, 3, 3);
+            rowTable(Zone.A, 910, y, 2, 2);
+        }
+        curveAround(710, 1360, Zone.A, 2);
 
         Map<Zone, Bounds> zb = new EnumMap<>(Zone.class);
-        zb.put(Zone.A, new Bounds(660, 230, 1000, 1000));
+        zb.put(Zone.A, new Bounds(660, 230, 1000, 960));
         zb.put(Zone.B, new Bounds(30, 90, 310, 1720));
         zb.put(Zone.C, new Bounds(345, 115, 675, 445));
-        zb.put(Zone.D, new Bounds(340, 605, 670, 935));
+        zb.put(Zone.D, new Bounds(345, 605, 675, 935));
 
         this.seats = Collections.unmodifiableList(s);
         this.blocks = Collections.unmodifiableList(b);
