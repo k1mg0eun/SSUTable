@@ -4,7 +4,7 @@ public enum Zone {
     A("긴 공용 테이블"),
     B("1인 칸막이석"),
     C("소파 부스"),
-    D("창가 라운지");
+    D("작은 테이블");
 
     public final String label;
 

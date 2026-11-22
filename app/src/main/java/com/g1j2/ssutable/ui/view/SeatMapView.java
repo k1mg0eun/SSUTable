@@ -294,33 +294,13 @@ public class SeatMapView extends View {
         canvas.translate(tx, ty);
         canvas.scale(s, s);
 
-        // 바닥과 벽 (아래쪽 가운데는 출입구)
+        // 바닥과 벽 (출입구는 위쪽 배식대 옆)
         fill.setColor(cFloor);
         canvas.drawRect(0, 0, SeatLayout.WIDTH, SeatLayout.HEIGHT, fill);
         stroke.setColor(cInk);
         stroke.setStrokeWidth(2.5f * dp * px1);
         stroke.setPathEffect(null);
-        path.reset();
-        path.moveTo(SeatLayout.ENTRANCE_LEFT, SeatLayout.HEIGHT);
-        path.lineTo(0, SeatLayout.HEIGHT);
-        path.lineTo(0, 0);
-        path.lineTo(SeatLayout.WIDTH, 0);
-        path.moveTo(SeatLayout.WIDTH, SeatLayout.HEIGHT);
-        path.lineTo(SeatLayout.ENTRANCE_RIGHT, SeatLayout.HEIGHT);
-        canvas.drawPath(path, stroke);
-        // 오른쪽 벽은 창
-        stroke.setStrokeWidth(1.2f * dp * px1);
-        canvas.drawLine(SeatLayout.WIDTH, 0, SeatLayout.WIDTH, SeatLayout.HEIGHT, stroke);
-        canvas.drawLine(SeatLayout.WIDTH - 5, 0, SeatLayout.WIDTH - 5, SeatLayout.HEIGHT, stroke);
-
-        text.setColor(cInk3);
-        text.setTextSize(11 * dp * px1);
-        text.setFakeBoldText(false);
-        canvas.drawText("출입구", SeatLayout.WIDTH / 2f, SeatLayout.HEIGHT - 10, text);
-        canvas.save();
-        canvas.rotate(90, SeatLayout.WIDTH - 14, SeatLayout.HEIGHT / 2f);
-        canvas.drawText("창", SeatLayout.WIDTH - 14, SeatLayout.HEIGHT / 2f, text);
-        canvas.restore();
+        canvas.drawRect(0, 0, SeatLayout.WIDTH, SeatLayout.HEIGHT, stroke);
 
         for (Block b : layout.blocks) drawBlock(canvas, b, px1);
         drawZoneLabels(canvas, px1);
@@ -347,6 +327,20 @@ public class SeatMapView extends View {
                 fill.setColor(cLineStrong);
                 canvas.drawRoundRect(rect, 2, 2, fill);
                 break;
+            case PILLAR:
+                fill.setColor(cInk2);
+                canvas.drawRect(rect, fill);
+                break;
+            case DOOR:
+                fill.setColor(cFree);
+                canvas.drawRect(rect, fill);
+                stroke.setColor(cInk3);
+                stroke.setStrokeWidth(1f * dp * px1);
+                canvas.drawRect(rect, stroke);
+                text.setColor(cInk3);
+                text.setTextSize(10 * dp * px1);
+                canvas.drawText(b.label, rect.centerX(), rect.bottom + 14 * dp * px1, text);
+                break;
             default:
                 fill.setColor(cFurniture);
                 canvas.drawRoundRect(rect, 3, 3, fill);
@@ -359,10 +353,11 @@ public class SeatMapView extends View {
         text.setColor(cInk2);
         text.setTextSize(11 * dp * px1);
         text.setFakeBoldText(true);
-        canvas.drawText("A  " + Zone.A.label, 100, 98, text);
-        canvas.drawText("C  " + Zone.C.label, 100, 886, text);
-        canvas.drawText("D  " + Zone.D.label, 608, 98, text);
-        canvas.drawText("B", 28, 98, text);
+        canvas.drawText("A  " + Zone.A.label, 545, 252, text);
+        canvas.drawText("B  " + Zone.B.label, 50, 240, text);
+        canvas.drawText("C", 296, 240, text);
+        canvas.drawText("D", 404, 252, text);
+        canvas.drawText("D  " + Zone.D.label, 440, 925, text);
         text.setFakeBoldText(false);
         text.setTextAlign(Paint.Align.CENTER);
     }

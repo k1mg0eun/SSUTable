@@ -2,7 +2,7 @@ package com.g1j2.ssutable.core;
 
 /** 도면에 그리는 가구·구조물. */
 public final class Block {
-    public enum Kind { TABLE, COUNTER, DESK, SOFA_BACK, BAR }
+    public enum Kind { TABLE, COUNTER, DESK, SOFA_BACK, PILLAR, DOOR, BAR }
 
     public final Kind kind;
     public final float left, top, right, bottom;
