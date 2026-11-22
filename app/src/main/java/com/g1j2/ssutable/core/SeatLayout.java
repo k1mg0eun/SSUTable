@@ -9,17 +9,16 @@ import java.util.Map;
 
 /**
  * 학생회관 3층 학생식당 340석 배치.
- * 팀이 그린 배치(1인석 6줄, 소파 부스 9개, 긴 테이블 4개, 6인 테이블 5개, 기둥, 출입구)를 옮겼다.
- * 전체 340석과 1인석 43석은 숭대시보 기사 숫자에 맞췄고,
- * 기억이 흐린 곳(가운데 세로 줄, 오른쪽 아래, 맨 아래 줄)은 340석이 되도록 채웠다.
- *  A 긴 공용 테이블 186석 (12인×2 테이블 7개, 9인×2 테이블 1개)
- *  B 1인 칸막이석     43석 (줄 6개, 전 좌석 콘센트)
- *  C 소파 부스        36석 (9개 부스 × 4)
- *  D 작은 테이블      75석 (6인 5개, 4인 9개, 바 테이블 9석)
+ * 팀이 사진을 보고 편집기에서 테이블 하나하나 위치·방향·좌석 수를 맞춘 배치를 그대로 옮겼다.
+ * 창가 1인석은 두 줄이 마주 보고, 원형 기둥 3개를 분홍·초록·흰 타원형 테이블이 두른다.
+ *  A 흰 테이블    217석
+ *  B 1인석·소파    83석 (1인석 43 + 소파석 40, 1인석은 전 좌석 콘센트)
+ *  C 분홍 테이블   20석 (첫째 기둥을 두르는 타원형 테이블)
+ *  D 초록 테이블   20석 (둘째 기둥을 두르는 타원형 테이블)
  */
 public final class SeatLayout {
     public static final float WIDTH = 1000f;
-    public static final float HEIGHT = 1720f;
+    public static final float HEIGHT = 1800f;
 
     public static final class Bounds {
         public final float left, top, right, bottom;
@@ -39,127 +38,64 @@ public final class SeatLayout {
     public final Map<Zone, Bounds> zoneBounds;
     private final Map<String, Seat> byId = new HashMap<>();
     private final Map<Zone, Integer> next = new EnumMap<>(Zone.class);
+    private final List<Seat> s = new ArrayList<>();
+    private final List<Block> b = new ArrayList<>();
 
     public static synchronized SeatLayout get() {
         if (instance == null) instance = new SeatLayout();
         return instance;
     }
 
-    private final List<Seat> s = new ArrayList<>();
-    private final List<Block> b = new ArrayList<>();
-
     private SeatLayout() {
-        b.add(new Block(Block.Kind.COUNTER, 20, 16, 509, 62, "배식대 · 식권 확인"));
-        b.add(new Block(Block.Kind.DOOR, 96, 140, 229, 160, "출입구"));
-        b.add(new Block(Block.Kind.DOOR, 240, 140, 380, 160, "출입구"));
-        pillar(8, 132);
-        pillar(50, 132);
-        for (int i = 0; i < 12; i++) pillar(400 + i * 50, 132);
-        pillar(660, 1090);
+        // 위쪽: 출입구, 작은 테이블
+        b.add(new Block(Block.Kind.DOOR, 63, 15, 163, 35, "출입구"));
+        b.add(new Block(Block.Kind.DOOR, 176, 15, 276, 35, "출입구"));
+        sideTable(440, 10, 90, 50);
+        sideTable(567, 10, 90, 50);
+        for (float[] r : new float[][]{{665, 10}, {840, 10}, {665, 100}, {845, 100}}) table4(r[0], r[1], 155, 75);
 
-        // 왼쪽: 1인석 줄 두 열과 소파 부스 한 열을 세 묶음으로
-        float[] groups = {255, 612, 970};
-        int[] singles = {8, 7, 7, 7, 7, 7};
-        for (int g = 0; g < groups.length; g++) {
-            singleRow(50, 70, groups[g], singles[g * 2]);
-            singleRow(210, 180, groups[g], singles[g * 2 + 1]);
+        // 왼쪽 창가: 창, 벽돌 기둥, 1인석 줄(마주 보는 두 줄)과 소파석
+        b.add(new Block(Block.Kind.WINDOW, 0, 120, 10, 1580, null));
+        for (float y : new float[]{102, 498, 810, 1088, 1435}) {
+            b.add(new Block(Block.Kind.PILLAR, 4, y - 20, 44, y + 20, null));
         }
-        for (float y0 : groups) {
-            for (int k = 0; k < 3; k++) booth(255, y0 + k * 110);
-        }
+        singleCol(40, 100, 385, 9, 0);
+        singleCol(156, 101, 385, 9, 2);
+        sofaCol(200, 100, 385, 16, 0);
+        singleCol(40, 1115, 270, 8, 0);
+        singleCol(150, 1110, 270, 6, 2);
+        sofaCol(200, 1115, 270, 12, 0);
+        singleCol(40, 1440, 270, 5, 0);
+        singleCol(155, 1440, 270, 6, 2);
+        sofaCol(205, 1435, 270, 12, 0);
+        // 왼쪽 가운데 흰 테이블 (10인 세로 테이블 4개)
+        for (float[] r : new float[][]{{60, 565}, {211, 565}, {65, 850}, {211, 855}}) colTable(Zone.A, r[0], r[1], 5, 5);
 
-        // 가운데 세로 줄: 바 테이블과 4인 테이블 (채운 것)
-        bar(400, 262, 9);
-        table4(405, 660);
-        table4(405, 790);
+        // 가운데: 원형 기둥 3개와 기둥을 두르는 타원형 테이블
+        curveAround(510, 280, Zone.C, 0);
+        curveAround(505, 770, Zone.D, 0);
+        curveAround(645, 1200, Zone.A, 2);
+        b.add(new Block(Block.Kind.PLANTER, 425, 515, 545, 555, null));
+        b.add(new Block(Block.Kind.PLANTER, 425, 965, 545, 1005, null));
 
-        // 오른쪽 위: 긴 테이블 (아래 두 개는 채운 것)
-        for (float y : new float[]{270, 400, 535, 670, 800}) longTable(545, y, 12);
-        // 가운데: 6인·4인 테이블
-        for (float y : new float[]{940, 1060, 1190}) table6(440, y);
-        for (float y : new float[]{1040, 1170}) table6(850, y);
-        table4(575, 940);
-        table4(715, 940);
-        table4(575, 1150);
-        table4(715, 1150);
-        // 아래쪽 (채운 것)
-        longTable(545, 1330, 12);
-        longTable(60, 1330, 9);
-        longTable(50, 1560, 12);
-        table4(560, 1560);
-        table4(700, 1560);
-        table4(840, 1560);
+        // 오른쪽 위: 18인 가로 테이블 6개 (마지막은 17석)
+        for (float[] r : new float[][]{{670, 245}, {675, 345}, {675, 475}, {680, 580}, {680, 735}}) rowTable(Zone.A, r[0], r[1], 9, 9);
+        rowTable(Zone.A, 680, 880, 9, 8);
+
+        // 아래쪽: 6인 테이블 3개(왼쪽), 4인 테이블 3개(오른쪽)
+        for (float[] r : new float[][]{{395, 1150}, {400, 1365}, {405, 1565}}) rowTable(Zone.A, r[0], r[1], 3, 3);
+        for (float[] r : new float[][]{{905, 1150}, {905, 1350}, {925, 1550}}) rowTable(Zone.A, r[0], r[1], 2, 2);
 
         Map<Zone, Bounds> zb = new EnumMap<>(Zone.class);
-        zb.put(Zone.A, new Bounds(535, 250, 990, 900));
-        zb.put(Zone.B, new Bounds(40, 245, 235, 1290));
-        zb.put(Zone.C, new Bounds(240, 245, 370, 1290));
-        zb.put(Zone.D, new Bounds(390, 250, 990, 1300));
+        zb.put(Zone.A, new Bounds(660, 230, 1000, 1000));
+        zb.put(Zone.B, new Bounds(30, 90, 310, 1720));
+        zb.put(Zone.C, new Bounds(345, 115, 675, 445));
+        zb.put(Zone.D, new Bounds(340, 605, 670, 935));
 
         this.seats = Collections.unmodifiableList(s);
         this.blocks = Collections.unmodifiableList(b);
         this.zoneBounds = Collections.unmodifiableMap(zb);
         for (Seat seat : s) byId.put(seat.id, seat);
-    }
-
-    private void seat(Zone zone, float x, float y, float w, float h, boolean outlet) {
-        int n = next.merge(zone, 1, Integer::sum);
-        s.add(new Seat(s.size(), zone.name() + "-" + n, zone, x, y, w, h, outlet));
-    }
-
-    private void pillar(float x, float y) {
-        b.add(new Block(Block.Kind.PILLAR, x, y, x + 36, y + 36, null));
-    }
-
-    /** 벽을 보고 앉는 1인석 count개. desk는 칸막이 책상, seatX는 좌석 열. */
-    private void singleRow(float deskX, float seatX, float y0, int count) {
-        b.add(new Block(Block.Kind.DESK, deskX, y0, deskX + 12, y0 + 310, null));
-        float gap = (310 - 24) / (float) (count - 1);
-        for (int i = 0; i < count; i++) seat(Zone.B, seatX, y0 + i * gap, 24, 24, true);
-    }
-
-    /** 세로로 긴 바 테이블과 한쪽에 놓인 의자 count개. */
-    private void bar(float x, float y, int count) {
-        b.add(new Block(Block.Kind.BAR, x + 30, y, x + 46, y + count * 40, null));
-        for (int i = 0; i < count; i++) seat(Zone.D, x, y + 8 + i * 40, 24, 24, false);
-    }
-
-    /** 세로로 놓인 4인 소파 부스. */
-    private void booth(float x, float y) {
-        b.add(new Block(Block.Kind.SOFA_BACK, x - 6, y, x - 1, y + 96, null));
-        b.add(new Block(Block.Kind.TABLE, x + 26, y + 4, x + 74, y + 92, null));
-        b.add(new Block(Block.Kind.SOFA_BACK, x + 101, y, x + 106, y + 96, null));
-        seat(Zone.C, x, y + 6, 23, 38, false);
-        seat(Zone.C, x, y + 52, 23, 38, false);
-        seat(Zone.C, x + 77, y + 6, 23, 38, false);
-        seat(Zone.C, x + 77, y + 52, 23, 38, false);
-    }
-
-    /** 한쪽에 perSide석씩 앉는 긴 테이블. 양 끝 좌석에 콘센트. */
-    private void longTable(float x, float y, int perSide) {
-        b.add(new Block(Block.Kind.TABLE, x, y + 30, x + perSide * 36, y + 58, null));
-        for (int side = 0; side < 2; side++) {
-            float sy = side == 0 ? y : y + 64;
-            for (int j = 0; j < perSide; j++) {
-                seat(Zone.A, x + 4 + j * 36, sy, 28, 24, j == 0 || j == perSide - 1);
-            }
-        }
-    }
-
-    private void table6(float x, float y) {
-        b.add(new Block(Block.Kind.TABLE, x + 2, y + 30, x + 110, y + 64, null));
-        for (int side = 0; side < 2; side++) {
-            float sy = side == 0 ? y : y + 70;
-            for (int j = 0; j < 3; j++) seat(Zone.D, x + 6 + j * 36, sy, 28, 24, false);
-        }
-    }
-
-    private void table4(float x, float y) {
-        b.add(new Block(Block.Kind.TABLE, x + 28, y + 28, x + 82, y + 82, null));
-        seat(Zone.D, x + 43, y, 24, 24, false);
-        seat(Zone.D, x, y + 43, 24, 24, false);
-        seat(Zone.D, x + 86, y + 43, 24, 24, false);
-        seat(Zone.D, x + 43, y + 86, 24, 24, false);
     }
 
     public Seat seat(String id) {
@@ -168,5 +104,113 @@ public final class SeatLayout {
 
     public int size() {
         return seats.size();
+    }
+
+    private void seat(Zone zone, float x, float y, float w, float h, boolean outlet) {
+        int n = next.merge(zone, 1, Integer::sum);
+        s.add(new Seat(s.size(), zone.name() + "-" + n, zone, x, y, w, h, outlet));
+    }
+
+    /**
+     * 줄 모양 가구의 좌표 변환. u는 줄 길이 방향, v는 폭 방향(폭 width).
+     * dir 0: 세로·v가 오른쪽으로, 1: 가로·v가 아래로, 2: 세로·v가 왼쪽으로, 3: 가로·v가 위로.
+     */
+    private static float[] place(int dir, float x, float y, float width, float u, float v, float lu, float lv) {
+        switch (dir) {
+            case 1: return new float[]{x + u, y + v, lu, lv};
+            case 2: return new float[]{x + width - v - lv, y + u, lv, lu};
+            case 3: return new float[]{x + u, y + width - v - lv, lu, lv};
+            default: return new float[]{x + v, y + u, lv, lu};
+        }
+    }
+
+    private void block(Block.Kind kind, float[] r) {
+        b.add(new Block(kind, r[0], r[1], r[0] + r[2], r[1] + r[3], null));
+    }
+
+    private void seat(Zone zone, float[] r, boolean outlet) {
+        seat(zone, r[0], r[1], r[2], r[3], outlet);
+    }
+
+    /** 칸막이 1인석 한 줄. dir 0이면 책상이 왼쪽(창 쪽), 2면 오른쪽. */
+    private void singleCol(float x, float y, float h, int count, int dir) {
+        block(Block.Kind.DESK, place(dir, x, y, 42, 0, 0, h, 12));
+        float pitch = (h - 24) / (count - 1);
+        for (int i = 0; i < count; i++) seat(Zone.B, place(dir, x, y, 42, i * pitch, 18, 24, 24), true);
+    }
+
+    /** 소파 벤치와 앞의 작은 2인 테이블. dir 0이면 소파가 왼쪽. */
+    private void sofaCol(float x, float y, float h, int seats, int dir) {
+        int pairs = seats / 2;
+        float pitch = h / pairs;
+        block(Block.Kind.SOFA_BACK, place(dir, x, y, 102, 0, 0, h, 8));
+        for (int i = 0; i < pairs; i++) {
+            float u = i * pitch + (pitch - 30) / 2;
+            seat(Zone.B, place(dir, x, y, 102, u, 10, 30, 26), false);
+            block(Block.Kind.TABLE, place(dir, x, y, 102, u + 2, 42, 26, 30));
+            seat(Zone.B, place(dir, x, y, 102, u + 3, 78, 24, 24), false);
+        }
+    }
+
+    /** 가로로 놓인 테이블. 위에 top석, 아래에 bottom석. */
+    private void rowTable(Zone zone, float x, float y, int top, int bottom) {
+        int n = Math.max(top, bottom);
+        b.add(new Block(Block.Kind.TABLE, x, y + 28, x + n * 36, y + 58, null));
+        for (int j = 0; j < top; j++) seat(zone, x + 4 + j * 36, y, 28, 24, false);
+        for (int j = 0; j < bottom; j++) seat(zone, x + 4 + j * 36, y + 62, 28, 24, false);
+    }
+
+    /** 세로로 놓인 테이블. 왼쪽에 left석, 오른쪽에 right석. */
+    private void colTable(Zone zone, float x, float y, int left, int right) {
+        int n = Math.max(left, right);
+        b.add(new Block(Block.Kind.TABLE, x + 28, y, x + 58, y + n * 36, null));
+        for (int j = 0; j < left; j++) seat(zone, x, y + 4 + j * 36, 24, 28, false);
+        for (int j = 0; j < right; j++) seat(zone, x + 62, y + 4 + j * 36, 24, 28, false);
+    }
+
+    /** 2인 테이블: 좌우로 한 명씩. */
+    private void sideTable(float x, float y, float w, float h) {
+        float cy = y + h / 2;
+        float cx = x + w / 2;
+        b.add(new Block(Block.Kind.TABLE, cx - 16, cy - 14, cx + 16, cy + 14, null));
+        seat(Zone.A, cx - 44, cy - 12, 24, 24, false);
+        seat(Zone.A, cx + 20, cy - 12, 24, 24, false);
+    }
+
+    /** 4인 테이블: 위아래로 두 명씩. */
+    private void table4(float x, float y, float w, float h) {
+        float cx = x + w / 2;
+        b.add(new Block(Block.Kind.TABLE, cx - 36, y + 26, cx + 36, y + 48, null));
+        for (int j = 0; j < 2; j++) {
+            seat(Zone.A, cx - 32 + j * 36, y, 28, 24, false);
+            seat(Zone.A, cx - 32 + j * 36, y + 51, 28, 24, false);
+        }
+    }
+
+
+    /** 원형 기둥과 기둥을 250도 감싸는 타원형 테이블. 안쪽 9석, 바깥쪽 11석. dir 0이면 오른쪽이 트임, 90도씩 시계 방향. */
+    private void curveAround(float cx, float cy, Zone zone, int dir) {
+        b.add(new Block(Block.Kind.ROUND_PILLAR, cx - 35, cy - 35, cx + 35, cy + 35, null));
+        double span = Math.toRadians(250);
+        double a0 = Math.PI - span / 2 + dir * Math.PI / 2;
+        float r = 110;
+        int segments = 24;
+        for (int i = 0; i <= segments; i++) {
+            double a = a0 + span * i / segments;
+            float px = cx + (float) (r * Math.cos(a));
+            float py = cy + (float) (r * Math.sin(a));
+            b.add(new Block(Block.Kind.TABLE, px - 12, py - 12, px + 12, py + 12, null));
+        }
+        ring(zone, cx, cy, r - 38, 9, a0, span);
+        ring(zone, cx, cy, r + 38, 11, a0, span);
+    }
+
+    private void ring(Zone zone, float cx, float cy, float radius, int count, double a0, double span) {
+        for (int i = 0; i < count; i++) {
+            double a = a0 + span * (i + 0.5) / count;
+            float px = cx + (float) (radius * Math.cos(a));
+            float py = cy + (float) (radius * Math.sin(a));
+            seat(zone, px - 11, py - 11, 22, 22, false);
+        }
     }
 }

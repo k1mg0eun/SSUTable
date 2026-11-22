@@ -328,8 +328,20 @@ public class SeatMapView extends View {
                 canvas.drawRoundRect(rect, 2, 2, fill);
                 break;
             case PILLAR:
-                fill.setColor(cInk2);
+                fill.setColor(Color.rgb(153, 60, 29));
                 canvas.drawRect(rect, fill);
+                break;
+            case ROUND_PILLAR:
+                fill.setColor(Color.rgb(186, 117, 23));
+                canvas.drawOval(rect, fill);
+                break;
+            case WINDOW:
+                fill.setColor(Color.rgb(133, 183, 235));
+                canvas.drawRect(rect, fill);
+                break;
+            case PLANTER:
+                fill.setColor(Color.rgb(151, 196, 89));
+                canvas.drawRoundRect(rect, 6, 6, fill);
                 break;
             case DOOR:
                 fill.setColor(cFree);
@@ -353,11 +365,10 @@ public class SeatMapView extends View {
         text.setColor(cInk2);
         text.setTextSize(11 * dp * px1);
         text.setFakeBoldText(true);
-        canvas.drawText("A  " + Zone.A.label, 545, 252, text);
-        canvas.drawText("B  " + Zone.B.label, 50, 240, text);
-        canvas.drawText("C", 296, 240, text);
-        canvas.drawText("D", 404, 252, text);
-        canvas.drawText("D  " + Zone.D.label, 440, 925, text);
+        canvas.drawText("A  " + Zone.A.label, 670, 238, text);
+        canvas.drawText("B  " + Zone.B.label, 290, 30, text);
+        canvas.drawText("C  " + Zone.C.label, 350, 112, text);
+        canvas.drawText("D  " + Zone.D.label, 345, 600, text);
         text.setFakeBoldText(false);
         text.setTextAlign(Paint.Align.CENTER);
     }

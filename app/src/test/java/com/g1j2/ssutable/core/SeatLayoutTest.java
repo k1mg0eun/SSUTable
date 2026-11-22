@@ -24,10 +24,10 @@ public class SeatLayoutTest {
             perZone[s.zone.ordinal()]++;
         }
         assertEquals(340, ids.size());
-        assertEquals(186, perZone[Zone.A.ordinal()]);
-        assertEquals(43, perZone[Zone.B.ordinal()]);
-        assertEquals(36, perZone[Zone.C.ordinal()]);
-        assertEquals(75, perZone[Zone.D.ordinal()]);
+        assertEquals(217, perZone[Zone.A.ordinal()]);
+        assertEquals(83, perZone[Zone.B.ordinal()]);
+        assertEquals(20, perZone[Zone.C.ordinal()]);
+        assertEquals(20, perZone[Zone.D.ordinal()]);
     }
 
     @Test
@@ -65,6 +65,13 @@ public class SeatLayoutTest {
                 assertFalse(a.id + " on " + bl.kind, a.left < bl.right && bl.left < a.right && a.top < bl.bottom && bl.top < a.bottom);
             }
         }
+    }
+
+    @Test
+    public void has43SingleSeatsWithOutlets() {
+        int singles = 0;
+        for (Seat s : SeatLayout.get().seats) if (s.outlet) singles++;
+        assertEquals(43, singles);
     }
 
     @Test
