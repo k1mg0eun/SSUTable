@@ -1,8 +1,10 @@
 package com.g1j2.ssutable;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Application;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -13,6 +15,7 @@ import com.g1j2.ssutable.core.DemoClock;
 import com.g1j2.ssutable.core.DemoSettings;
 import com.g1j2.ssutable.core.DemoState;
 import com.g1j2.ssutable.core.Env;
+import com.g1j2.ssutable.core.Geofence;
 import com.g1j2.ssutable.core.Mode;
 import com.g1j2.ssutable.core.ModeInfo;
 import com.g1j2.ssutable.core.ReservationEngine;
@@ -20,6 +23,7 @@ import com.g1j2.ssutable.core.Schedule;
 import com.g1j2.ssutable.core.SeatRepository;
 import com.g1j2.ssutable.data.FirebaseDemoSettings;
 import com.g1j2.ssutable.data.FirebaseSeatRepository;
+import com.g1j2.ssutable.data.GpsTracker;
 import com.g1j2.ssutable.data.LocalDemoSettings;
 import com.g1j2.ssutable.data.LocalSeatRepository;
 import com.g1j2.ssutable.data.Prefs;
@@ -57,6 +61,8 @@ public class App extends Application implements Env {
     private boolean signingIn;
     private long signInBackoff = SIGN_IN_RETRY_MS;
     private Notifier notifier;
+    private GpsTracker gps;
+    private int startedActivities;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final List<Runnable> listeners = new CopyOnWriteArrayList<>();
 
@@ -94,7 +100,52 @@ public class App extends Application implements Env {
             tickNow();
         });
         notifier = new Notifier(this);
+        gps = new GpsTracker(this, Geofence.building(), this::tickNow);
+        registerActivityLifecycleCallbacks(new ForegroundCounter());
         handler.post(ticker);
+    }
+
+    /** 화면에 떠 있는 동안만 위치를 받는다. 권한·시연 설정이 바뀌면 다시 부른다. */
+    public void refreshLocation() {
+        boolean want = startedActivities > 0
+                && prefs.locationSource() == Prefs.LocationSource.GPS
+                && hasLocationPermission();
+        if (want) gps.start();
+        else gps.stop();
+    }
+
+    public GpsTracker gps() {
+        return gps;
+    }
+
+    /** 앱이 화면에 있는지 센다. */
+    private final class ForegroundCounter implements ActivityLifecycleCallbacks {
+        @Override
+        public void onActivityStarted(@NonNull Activity activity) {
+            startedActivities++;
+            refreshLocation();
+        }
+
+        @Override
+        public void onActivityStopped(@NonNull Activity activity) {
+            startedActivities = Math.max(0, startedActivities - 1);
+            refreshLocation();
+        }
+
+        @Override
+        public void onActivityCreated(@NonNull Activity activity, Bundle savedInstanceState) {}
+
+        @Override
+        public void onActivityResumed(@NonNull Activity activity) {}
+
+        @Override
+        public void onActivityPaused(@NonNull Activity activity) {}
+
+        @Override
+        public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {}
+
+        @Override
+        public void onActivityDestroyed(@NonNull Activity activity) {}
     }
 
     /** 디스크 캐시를 끄고, 익명 로그인 뒤 리스너를 붙인다. 그 전까지는 CONNECTING. */
@@ -260,12 +311,21 @@ public class App extends Application implements Env {
 
     @Override
     public boolean inside() {
-        return prefs.inside();
+        switch (prefs.locationSource()) {
+            case INSIDE:
+                return true;
+            case OUTSIDE:
+                return false;
+            default:
+                return Boolean.TRUE.equals(gps.inside());
+        }
     }
 
+    /** GPS 모드에서는 위치를 실제로 알 때만 추적 중. 모르면 자리 비움 규칙을 쓰지 않는다. */
     @Override
     public boolean locationTracking() {
-        return hasLocationPermission();
+        if (!hasLocationPermission()) return false;
+        return prefs.locationSource() != Prefs.LocationSource.GPS || gps.inside() != null;
     }
 
     @Override

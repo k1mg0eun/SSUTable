@@ -374,6 +374,15 @@
             app:singleSelection="true">
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/demoGps"
+                style="@style/Widget.SSU.Segment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="GPS" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/demoInside"
                 style="@style/Widget.SSU.Segment"
                 android:layout_width="wrap_content"

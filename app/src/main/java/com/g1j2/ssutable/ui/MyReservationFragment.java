@@ -15,6 +15,7 @@ import androidx.core.widget.TextViewCompat;
 
 import com.g1j2.ssutable.App;
 import com.g1j2.ssutable.R;
+import com.g1j2.ssutable.core.Geofence;
 import com.g1j2.ssutable.core.Mode;
 import com.g1j2.ssutable.core.Reservation;
 import com.g1j2.ssutable.core.ReservationEngine;
@@ -22,6 +23,7 @@ import com.g1j2.ssutable.core.Schedule;
 import com.g1j2.ssutable.core.SeatLayout;
 import com.g1j2.ssutable.core.SeatRepository;
 import com.g1j2.ssutable.core.Ticket;
+import com.g1j2.ssutable.data.Prefs;
 import com.g1j2.ssutable.ui.view.BarView;
 import com.g1j2.ssutable.ui.view.RingView;
 import com.google.android.material.button.MaterialButton;
@@ -86,9 +88,12 @@ public class MyReservationFragment extends LiveFragment {
 
         insideToggle.addOnButtonCheckedListener((group, id, checked) -> {
             if (!checked) return;
-            boolean inside = id == R.id.demoInside;
-            if (App.get().prefs().inside() != inside) {
-                App.get().prefs().setInside(inside);
+            Prefs.LocationSource source = id == R.id.demoInside ? Prefs.LocationSource.INSIDE
+                    : id == R.id.demoOutside ? Prefs.LocationSource.OUTSIDE
+                    : Prefs.LocationSource.GPS;
+            if (App.get().prefs().locationSource() != source) {
+                App.get().prefs().setLocationSource(source);
+                App.get().refreshLocation();
                 App.get().tickNow();
             }
         });
@@ -105,7 +110,10 @@ public class MyReservationFragment extends LiveFragment {
         boolean showDemo = app.prefs().demoPanel();
         demoBar.setVisibility(showDemo ? View.VISIBLE : View.GONE);
         if (showDemo) {
-            int want = app.prefs().inside() ? R.id.demoInside : R.id.demoOutside;
+            Prefs.LocationSource source = app.prefs().locationSource();
+            int want = source == Prefs.LocationSource.INSIDE ? R.id.demoInside
+                    : source == Prefs.LocationSource.OUTSIDE ? R.id.demoOutside
+                    : R.id.demoGps;
             if (insideToggle.getCheckedButtonId() != want) insideToggle.check(want);
         }
 
@@ -154,17 +162,22 @@ public class MyReservationFragment extends LiveFragment {
         App app = App.get();
         String text;
         int color = R.color.ink2;
-        if (!app.locationTracking()) {
+        boolean gpsMode = app.prefs().locationSource() == Prefs.LocationSource.GPS;
+        if (!app.hasLocationPermission()) {
             text = r.state == Reservation.State.WAITING
                     ? "위치 권한이 없어 어디서든 도착을 확인할 수 있어요"
                     : "위치 권한이 없어 시간이 끝날 때만 반납돼요";
+        } else if (gpsMode && !app.gps().configured()) {
+            text = "학생회관 좌표가 아직 없어 위치와 상관없이 도착할 수 있어요";
+        } else if (!app.locationTracking()) {
+            text = "현재 위치를 확인하는 중이에요";
         } else if (app.inside()) {
-            text = "학생회관 안에 있어요";
+            text = "학생회관 안에 있어요" + distanceSuffix(gpsMode);
             color = R.color.mode_lunch;
         } else {
-            text = r.state == Reservation.State.WAITING
-                    ? "학생회관 100m 밖이라 아직 도착할 수 없어요"
-                    : "학생회관 밖에 있어요";
+            text = (r.state == Reservation.State.WAITING
+                    ? "학생회관 " + Math.round(Geofence.ENTER_RADIUS_M) + "m 밖이라 아직 도착할 수 없어요"
+                    : "학생회관 밖에 있어요") + distanceSuffix(gpsMode);
             color = R.color.warn_ink;
         }
         locationLine.setText(text);
@@ -172,6 +185,13 @@ public class MyReservationFragment extends LiveFragment {
         locationLine.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_pin, 0, 0, 0);
         TextViewCompat.setCompoundDrawableTintList(locationLine,
                 ContextCompat.getColorStateList(requireContext(), color));
+    }
+
+    /** GPS로 판정할 때만 학생회관까지의 거리를 덧붙인다. */
+    private static String distanceSuffix(boolean gpsMode) {
+        double d = App.get().gps().distance();
+        if (!gpsMode || Double.isNaN(d)) return "";
+        return " (약 " + Math.round(d) + "m)";
     }
 
     private void renderWaiting(Reservation r, long now) {
