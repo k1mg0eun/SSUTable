@@ -90,10 +90,16 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         MaterialButtonToggleGroup insideGroup = findViewById(R.id.insideGroup);
-        insideGroup.check(prefs.inside() ? R.id.inside : R.id.outside);
+        Prefs.LocationSource source = prefs.locationSource();
+        insideGroup.check(source == Prefs.LocationSource.INSIDE ? R.id.inside
+                : source == Prefs.LocationSource.OUTSIDE ? R.id.outside
+                : R.id.locationGps);
         insideGroup.addOnButtonCheckedListener((g, id, checked) -> {
             if (!checked) return;
-            prefs.setInside(id == R.id.inside);
+            prefs.setLocationSource(id == R.id.inside ? Prefs.LocationSource.INSIDE
+                    : id == R.id.outside ? Prefs.LocationSource.OUTSIDE
+                    : Prefs.LocationSource.GPS);
+            App.get().refreshLocation();
             App.get().tickNow();
         });
 

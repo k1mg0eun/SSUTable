@@ -32,7 +32,10 @@ public class OnboardingActivity extends AppCompatActivity {
     private final ActivityResultLauncher<String> notifyPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), ok -> renderPermissions());
     private final ActivityResultLauncher<String[]> locationPermission =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), ok -> renderPermissions());
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), ok -> {
+                App.get().refreshLocation();
+                renderPermissions();
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

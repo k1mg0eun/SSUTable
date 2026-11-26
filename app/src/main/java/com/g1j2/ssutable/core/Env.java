@@ -8,7 +8,7 @@ public interface Env {
 
     boolean exam();
 
-    /** 학생회관 반경 100m 안에 있는지. */
+    /** 학생회관 반경(Geofence.ENTER_RADIUS_M) 안에 있는지. */
     boolean inside();
 
     /** 위치 권한이 있어 위치를 보고 있는지. 없으면 시간 만료로만 반납한다. */

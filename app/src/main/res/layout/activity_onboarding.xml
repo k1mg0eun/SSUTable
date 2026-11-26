@@ -140,7 +140,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="학생회관 100m 안에서 도착을 확인하고, 30분 넘게 벗어나면 자리를 반납해요" />
+                            android:text="학생회관 60m 안에서 도착을 확인하고, 30분 넘게 벗어나면 자리를 반납해요" />
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton

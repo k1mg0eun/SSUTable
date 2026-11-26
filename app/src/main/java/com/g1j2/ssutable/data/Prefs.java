@@ -94,12 +94,19 @@ public final class Prefs {
         sp.edit().putBoolean("exam", on).apply();
     }
 
-    public boolean inside() {
-        return sp.getBoolean("inside", true);
+    /** 학생회관 안/밖을 무엇으로 정할지. 시연 때는 안이나 밖으로 고정할 수 있다. */
+    public enum LocationSource { GPS, INSIDE, OUTSIDE }
+
+    public LocationSource locationSource() {
+        try {
+            return LocationSource.valueOf(sp.getString("locationSource", LocationSource.GPS.name()));
+        } catch (IllegalArgumentException e) {
+            return LocationSource.GPS;
+        }
     }
 
-    public void setInside(boolean on) {
-        sp.edit().putBoolean("inside", on).apply();
+    public void setLocationSource(LocationSource source) {
+        sp.edit().putString("locationSource", source.name()).apply();
     }
 
     public boolean demoPanel() {
@@ -139,7 +146,7 @@ public final class Prefs {
     /** 내 정보·알림·위치 설정만 지운다. 시연 설정(시계·배속·모드·시험)은 남긴다. */
     public void clearPersonal() {
         sp.edit().remove("name").remove("studentId").remove("permissionsSeen")
-                .remove("inside").remove("demoPanel").remove("conflictNext").apply();
+                .remove("inside").remove("locationSource").remove("demoPanel").remove("conflictNext").apply();
         SharedPreferences.Editor e = sp.edit();
         for (Alert a : Alert.values()) e.remove("alert_" + a.name());
         e.apply();
