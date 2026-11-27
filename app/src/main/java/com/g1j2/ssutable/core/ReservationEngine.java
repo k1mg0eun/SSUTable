@@ -43,9 +43,10 @@ public final class ReservationEngine {
         return windowEnd > 0 ? Math.min(end, windowEnd) : end;
     }
 
-    /** 위치를 추적하는 중이면 학생회관 안에서만 도착 확인할 수 있다. */
-    public boolean canArrive(Reservation r, boolean inside, boolean tracking) {
-        return r.state == Reservation.State.WAITING && (!tracking || inside);
+    /** 위치를 보는 중이면 학생회관 안으로 확인됐을 때만 도착할 수 있다. 위치를 아직 모르면 기다린다. */
+    public boolean canArrive(Reservation r, Presence presence) {
+        return r.state == Reservation.State.WAITING
+                && (presence == Presence.INSIDE || presence == Presence.OFF);
     }
 
     public void arrive(Reservation r, long now) {
@@ -91,7 +92,7 @@ public final class ReservationEngine {
     }
 
     /** 시간이 흐르며 일어나는 자동 처리. 일어난 일을 돌려준다. */
-    public List<Event> tick(Reservation r, long now, boolean inside, boolean tracking) {
+    public List<Event> tick(Reservation r, long now, Presence presence) {
         List<Event> events = new ArrayList<>();
         switch (r.state) {
             case WAITING:
@@ -109,7 +110,7 @@ public final class ReservationEngine {
                     events.add(Event.TIME_UP);
                     break;
                 }
-                if (tracking && !inside) {
+                if (presence == Presence.OUTSIDE) {
                     r.state = Reservation.State.AWAY;
                     r.awaySince = now;
                     events.add(Event.AWAY_STARTED);
@@ -127,7 +128,8 @@ public final class ReservationEngine {
                 } else if (now >= r.awaySince + AWAY_GRACE) {
                     end(r, r.awaySince + AWAY_GRACE, Reservation.EndReason.AWAY_TIMEOUT);
                     events.add(Event.AWAY_TIMEOUT);
-                } else if (!tracking || inside) {
+                } else if (presence == Presence.INSIDE || presence == Presence.OFF) {
+                    // 위치를 모르는 동안(UNKNOWN)에는 자리 비움을 풀지 않고 30분을 계속 센다.
                     r.state = Reservation.State.IN_USE;
                     r.awaySince = -1;
                     events.add(Event.BACK);

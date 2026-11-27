@@ -115,7 +115,7 @@ public final class LocalSeatRepository implements SeatRepository {
     @Override
     public synchronized boolean arrive() {
         if (current == null) return false;
-        if (!engine.canArrive(current, env.inside(), env.locationTracking())) return false;
+        if (!engine.canArrive(current, env.presence())) return false;
         engine.arrive(current, env.now());
         changed();
         return true;
@@ -170,7 +170,7 @@ public final class LocalSeatRepository implements SeatRepository {
     public synchronized List<ReservationEngine.Event> tick() {
         List<ReservationEngine.Event> events = Collections.emptyList();
         if (current != null && current.active()) {
-            events = engine.tick(current, env.now(), env.inside(), env.locationTracking());
+            events = engine.tick(current, env.now(), env.presence());
             if (!events.isEmpty()) changed();
         }
         lastSnapshot = compute();

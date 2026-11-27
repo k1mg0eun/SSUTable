@@ -1,5 +1,9 @@
 package com.g1j2.ssutable.core;
 
+import static com.g1j2.ssutable.core.Presence.INSIDE;
+import static com.g1j2.ssutable.core.Presence.OFF;
+import static com.g1j2.ssutable.core.Presence.OUTSIDE;
+import static com.g1j2.ssutable.core.Presence.UNKNOWN;
 import static com.g1j2.ssutable.core.ReservationEngine.MIN;
 import static com.g1j2.ssutable.core.ScheduleTest.at;
 import static org.junit.Assert.assertEquals;
@@ -47,10 +51,10 @@ public class ReservationEngineTest {
     @Test
     public void noShowAfterTenMinutesCancelsTicket() {
         Reservation r = reserveAt(at(12, 0), null);
-        List<ReservationEngine.Event> warn = engine.tick(r, at(12, 7), true, true);
+        List<ReservationEngine.Event> warn = engine.tick(r, at(12, 7), INSIDE);
         assertTrue(warn.contains(ReservationEngine.Event.ARRIVAL_SOON));
 
-        List<ReservationEngine.Event> ev = engine.tick(r, at(12, 10), true, true);
+        List<ReservationEngine.Event> ev = engine.tick(r, at(12, 10), INSIDE);
         assertTrue(ev.contains(ReservationEngine.Event.NO_SHOW));
         assertEquals(Reservation.State.ENDED, r.state);
         assertEquals(Reservation.EndReason.NO_SHOW, r.endReason);
@@ -60,9 +64,49 @@ public class ReservationEngineTest {
     @Test
     public void arriveNeedsToBeInsideWhenTracking() {
         Reservation r = reserveAt(at(12, 0), null);
-        assertFalse(engine.canArrive(r, false, true));
-        assertTrue(engine.canArrive(r, true, true));
-        assertTrue(engine.canArrive(r, false, false));
+        assertFalse(engine.canArrive(r, OUTSIDE));
+        assertTrue(engine.canArrive(r, INSIDE));
+        assertTrue(engine.canArrive(r, OFF));
+    }
+
+    @Test
+    public void cannotArriveBeforeLocationIsKnown() {
+        Reservation r = reserveAt(at(12, 0), null);
+        assertFalse(engine.canArrive(r, UNKNOWN));
+    }
+
+    @Test
+    public void unknownLocationDoesNotStartAway() {
+        Reservation r = reserveAt(at(14, 10), null);
+        engine.arrive(r, at(14, 10));
+        assertTrue(engine.tick(r, at(14, 30), UNKNOWN).isEmpty());
+        assertEquals(Reservation.State.IN_USE, r.state);
+    }
+
+    @Test
+    public void closingTheAppWhileAwayKeepsTheTimerRunning() {
+        Reservation r = reserveAt(at(14, 10), null);
+        engine.arrive(r, at(14, 10));
+        engine.tick(r, at(14, 30), OUTSIDE);
+        assertEquals(Reservation.State.AWAY, r.state);
+
+        // 앱을 닫아 위치를 모르게 돼도 자리 비움은 풀리지 않는다
+        assertTrue(engine.tick(r, at(14, 35), UNKNOWN).isEmpty());
+        assertEquals(Reservation.State.AWAY, r.state);
+        assertEquals(at(14, 30), r.awaySince);
+
+        // 다시 열었을 때 밖이면 처음 나간 시각부터 30분으로 반납
+        assertTrue(engine.tick(r, at(15, 0), OUTSIDE).contains(ReservationEngine.Event.AWAY_TIMEOUT));
+        assertEquals(at(15, 0), r.endedAt);
+    }
+
+    @Test
+    public void losingLocationPermissionWhileAwayFallsBackToTimeOnly() {
+        Reservation r = reserveAt(at(14, 10), null);
+        engine.arrive(r, at(14, 10));
+        engine.tick(r, at(14, 30), OUTSIDE);
+        assertTrue(engine.tick(r, at(14, 35), OFF).contains(ReservationEngine.Event.BACK));
+        assertEquals(Reservation.State.IN_USE, r.state);
     }
 
     @Test
@@ -77,7 +121,7 @@ public class ReservationEngineTest {
         Reservation r = reserveAt(at(12, 0), null);
         engine.arrive(r, at(12, 5));
         assertEquals(at(12, 50), r.endsAt);
-        List<ReservationEngine.Event> ev = engine.tick(r, at(12, 50), true, true);
+        List<ReservationEngine.Event> ev = engine.tick(r, at(12, 50), INSIDE);
         assertTrue(ev.contains(ReservationEngine.Event.TIME_UP));
         assertEquals(Reservation.EndReason.TIME_UP, r.endReason);
         assertEquals(45 * MIN, r.usedMillis());
@@ -102,14 +146,14 @@ public class ReservationEngineTest {
         Reservation r = reserveAt(at(14, 10), null);
         engine.arrive(r, at(14, 10));
 
-        assertTrue(engine.tick(r, at(14, 30), false, true).contains(ReservationEngine.Event.AWAY_STARTED));
+        assertTrue(engine.tick(r, at(14, 30), OUTSIDE).contains(ReservationEngine.Event.AWAY_STARTED));
         assertEquals(Reservation.State.AWAY, r.state);
 
-        assertTrue(engine.tick(r, at(14, 50), true, true).contains(ReservationEngine.Event.BACK));
+        assertTrue(engine.tick(r, at(14, 50), INSIDE).contains(ReservationEngine.Event.BACK));
         assertEquals(Reservation.State.IN_USE, r.state);
 
-        engine.tick(r, at(15, 0), false, true);
-        assertTrue(engine.tick(r, at(15, 30), false, true).contains(ReservationEngine.Event.AWAY_TIMEOUT));
+        engine.tick(r, at(15, 0), OUTSIDE);
+        assertTrue(engine.tick(r, at(15, 30), OUTSIDE).contains(ReservationEngine.Event.AWAY_TIMEOUT));
         assertEquals(Reservation.EndReason.AWAY_TIMEOUT, r.endReason);
     }
 
@@ -117,7 +161,7 @@ public class ReservationEngineTest {
     public void withoutLocationOnlyTimeEndsIt() {
         Reservation r = reserveAt(at(14, 10), null);
         engine.arrive(r, at(14, 10));
-        assertTrue(engine.tick(r, at(15, 0), false, false).isEmpty());
+        assertTrue(engine.tick(r, at(15, 0), OFF).isEmpty());
         assertEquals(Reservation.State.IN_USE, r.state);
     }
 
