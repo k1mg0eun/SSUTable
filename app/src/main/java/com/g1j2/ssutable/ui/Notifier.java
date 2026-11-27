@@ -58,7 +58,7 @@ public final class Notifier {
             case AWAY_STARTED:
                 title = "자리 비움으로 바뀌었어요";
                 text = Fmt.hm(r.awaySince + ReservationEngine.AWAY_GRACE) + "까지 돌아오지 않으면 "
-                        + seat + "가 반납돼요.";
+                        + seat + "가 반납돼요. 돌아오면 앱을 열어 주세요.";
                 break;
             case AWAY_TIMEOUT:
                 title = "자리가 반납됐어요";

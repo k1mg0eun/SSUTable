@@ -17,6 +17,7 @@ import com.g1j2.ssutable.App;
 import com.g1j2.ssutable.R;
 import com.g1j2.ssutable.core.Geofence;
 import com.g1j2.ssutable.core.Mode;
+import com.g1j2.ssutable.core.Presence;
 import com.g1j2.ssutable.core.Reservation;
 import com.g1j2.ssutable.core.ReservationEngine;
 import com.g1j2.ssutable.core.Schedule;
@@ -163,19 +164,32 @@ public class MyReservationFragment extends LiveFragment {
         String text;
         int color = R.color.ink2;
         boolean gpsMode = app.prefs().locationSource() == Prefs.LocationSource.GPS;
+        boolean waiting = r.state == Reservation.State.WAITING;
+        Presence presence = app.presence();
         if (!app.hasLocationPermission()) {
-            text = r.state == Reservation.State.WAITING
+            text = waiting
                     ? "위치 권한이 없어 어디서든 도착을 확인할 수 있어요"
                     : "위치 권한이 없어 시간이 끝날 때만 반납돼요";
         } else if (gpsMode && !app.gps().configured()) {
             text = "학생회관 좌표가 아직 없어 위치와 상관없이 도착할 수 있어요";
-        } else if (!app.locationTracking()) {
-            text = "현재 위치를 확인하는 중이에요";
-        } else if (app.inside()) {
+        } else if (presence == Presence.OFF) {
+            text = waiting
+                    ? "정확한 위치 권한이 없어 어디서든 도착을 확인할 수 있어요"
+                    : "정확한 위치 권한이 없어 시간이 끝날 때만 반납돼요";
+        } else if (presence == Presence.UNKNOWN) {
+            if (!app.locationEnabled()) {
+                text = "휴대폰 위치가 꺼져 있어요. 켜야 학생회관 도착을 확인할 수 있어요";
+                color = R.color.warn_ink;
+            } else {
+                text = waiting
+                        ? "현재 위치를 확인하는 중이에요. 확인되면 도착할 수 있어요"
+                        : "현재 위치를 확인하는 중이에요";
+            }
+        } else if (presence == Presence.INSIDE) {
             text = "학생회관 안에 있어요" + distanceSuffix(gpsMode);
             color = R.color.mode_lunch;
         } else {
-            text = (r.state == Reservation.State.WAITING
+            text = (waiting
                     ? "학생회관 " + Math.round(Geofence.ENTER_RADIUS_M) + "m 밖이라 아직 도착할 수 없어요"
                     : "학생회관 밖에 있어요") + distanceSuffix(gpsMode);
             color = R.color.warn_ink;
@@ -205,7 +219,7 @@ public class MyReservationFragment extends LiveFragment {
         waitDeadline.setText(Fmt.hm(r.arriveBy) + "까지 도착하지 않으면 자동으로 취소돼요");
 
         App app = App.get();
-        boolean canArrive = engine.canArrive(r, app.inside(), app.locationTracking());
+        boolean canArrive = engine.canArrive(r, app.presence());
         primary.setVisibility(View.VISIBLE);
         primary.setText("도착");
         primary.setEnabled(canArrive);

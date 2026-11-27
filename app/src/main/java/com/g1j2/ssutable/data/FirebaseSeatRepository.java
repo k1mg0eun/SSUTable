@@ -177,7 +177,7 @@ public final class FirebaseSeatRepository implements SeatRepository {
         if (current == null && saved != null) {
             current = saved;
             // 꺼져 있던 동안 지난 마감을 먼저 처리한다 (알림은 내지 않음)
-            if (current.active() && !engine.tick(current, env.now(), env.inside(), env.locationTracking()).isEmpty()) {
+            if (current.active() && !engine.tick(current, env.now(), env.presence()).isEmpty()) {
                 changed();
                 pushMine();
             } else {
@@ -340,7 +340,7 @@ public final class FirebaseSeatRepository implements SeatRepository {
     @Override
     public synchronized boolean arrive() {
         if (current == null) return false;
-        if (!engine.canArrive(current, env.inside(), env.locationTracking())) return false;
+        if (!engine.canArrive(current, env.presence())) return false;
         engine.arrive(current, env.now());
         changed();
         pushMine();
@@ -402,7 +402,7 @@ public final class FirebaseSeatRepository implements SeatRepository {
     public synchronized List<ReservationEngine.Event> tick() {
         List<ReservationEngine.Event> events = Collections.emptyList();
         if (current != null && current.active()) {
-            events = engine.tick(current, env.now(), env.inside(), env.locationTracking());
+            events = engine.tick(current, env.now(), env.presence());
             if (!events.isEmpty()) {
                 changed();
                 pushMine();

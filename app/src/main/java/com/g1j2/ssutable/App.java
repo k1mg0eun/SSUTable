@@ -17,6 +17,7 @@ import com.g1j2.ssutable.core.DemoState;
 import com.g1j2.ssutable.core.Env;
 import com.g1j2.ssutable.core.Geofence;
 import com.g1j2.ssutable.core.Mode;
+import com.g1j2.ssutable.core.Presence;
 import com.g1j2.ssutable.core.ModeInfo;
 import com.g1j2.ssutable.core.ReservationEngine;
 import com.g1j2.ssutable.core.Schedule;
@@ -109,7 +110,7 @@ public class App extends Application implements Env {
     public void refreshLocation() {
         boolean want = startedActivities > 0
                 && prefs.locationSource() == Prefs.LocationSource.GPS
-                && hasLocationPermission();
+                && hasPreciseLocation();
         if (want) gps.start();
         else gps.stop();
     }
@@ -309,23 +310,25 @@ public class App extends Application implements Env {
         return demo.current().exam;
     }
 
+    /**
+     * 위치 규칙에 쓸 판정. GPS 모드에서 위치를 아직 모르면 UNKNOWN이라,
+     * 도착은 막고 자리 비움 상태는 그대로 둔다 (앱을 닫았다 열어도 30분이 초기화되지 않게).
+     * 대략적인 위치만 허용했거나 좌표가 없으면 60m를 판정할 수 없으니 OFF.
+     */
     @Override
-    public boolean inside() {
+    public Presence presence() {
+        if (!hasLocationPermission()) return Presence.OFF;
         switch (prefs.locationSource()) {
             case INSIDE:
-                return true;
+                return Presence.INSIDE;
             case OUTSIDE:
-                return false;
+                return Presence.OUTSIDE;
             default:
-                return Boolean.TRUE.equals(gps.inside());
+                if (!hasPreciseLocation() || !gps.configured()) return Presence.OFF;
+                Boolean in = gps.inside();
+                if (in == null) return Presence.UNKNOWN;
+                return in ? Presence.INSIDE : Presence.OUTSIDE;
         }
-    }
-
-    /** GPS 모드에서는 위치를 실제로 알 때만 추적 중. 모르면 자리 비움 규칙을 쓰지 않는다. */
-    @Override
-    public boolean locationTracking() {
-        if (!hasLocationPermission()) return false;
-        return prefs.locationSource() != Prefs.LocationSource.GPS || gps.inside() != null;
     }
 
     @Override
@@ -338,6 +341,18 @@ public class App extends Application implements Env {
     public boolean hasLocationPermission() {
         return granted(Manifest.permission.ACCESS_FINE_LOCATION)
                 || granted(Manifest.permission.ACCESS_COARSE_LOCATION);
+    }
+
+    /** 정확한 위치 권한. 대략적인 위치(수 km 오차)로는 60m 판정을 할 수 없다. */
+    public boolean hasPreciseLocation() {
+        return granted(Manifest.permission.ACCESS_FINE_LOCATION);
+    }
+
+    /** 휴대폰 설정에서 위치가 켜져 있는지. */
+    public boolean locationEnabled() {
+        android.location.LocationManager lm =
+                (android.location.LocationManager) getSystemService(LOCATION_SERVICE);
+        return lm != null && androidx.core.location.LocationManagerCompat.isLocationEnabled(lm);
     }
 
     public boolean hasNotificationPermission() {
